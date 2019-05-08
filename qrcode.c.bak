@@ -20,7 +20,7 @@
 #include "Comms\ProtocoloDebug232.h"
 #include "Assert.h"
 #include "SrvFonts.h"
-
+#include "SrvLogos.h"
   #if CORR_CAMBIO_FTO
 #include "RegistrosImpresion.h"
 #include ".\DrvHw\DrvFPGA.h"

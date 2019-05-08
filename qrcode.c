@@ -12,15 +12,9 @@
 #include "parser.h"
 #include "imagen.h"
 #include "qrcode.h"
-#include "tablas.h"
-#include "SrvImpresion.h"
-#include "SrvFonts.h"
-#include "SrvMemoriaDinamica.h"
-#include ".\FontsFlash\FontsFijos.h"
 #include "Comms\ProtocoloDebug232.h"
 #include "Assert.h"
-#include "SrvFonts.h"
-#include "SrvLogos.h"
+
   #if CORR_CAMBIO_FTO
 #include "RegistrosImpresion.h"
 #include ".\DrvHw\DrvFPGA.h"
