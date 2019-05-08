@@ -1,6 +1,8 @@
 #define QR_CODE                 1
-uchar	cal_qr(void);
-
+uchar	cal_qr								(void);
+struct	QRcode *obtenQRcode					(void);
+uchar	*obtenBufParser						(void);
+uint	obtenNumDig						    (void);
 //**************************************************************************************
 // DEFINES                                                                             *
 //**************************************************************************************
