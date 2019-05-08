@@ -147,7 +147,6 @@ static void calcula_error_codes(uchar *data, uint num_data, uchar *error_codes, 
 {
     int i, j;
     uchar c[68], b[68];
-    int fin;
     int root=1;
 	
     for(i = 0; i < 68; i++)
@@ -158,28 +157,19 @@ static void calcula_error_codes(uchar *data, uint num_data, uchar *error_codes, 
     for (i = 0; i <= num_error_correction_codes; i++)
         c[i] = 0;
 
-    c[num_error_correction_codes - 1] = 1;
+     c[0] = 1;
     
-    for(i = 0;i < num_error_correction_codes;i++) /* Calculo de coeficientes */
-    {
-     for(j = 0; j < num_error_correction_codes;j++)
-        {
-        c[j]= prodQR(c[j],root);
-        if(j + 1 < num_error_correction_codes)
-            c[j] ^= c[j+1];
-        }
-        root = prodQR(root, 0x02);
-    }
+   for (i = num_error_correction_codes - 1; i >= 0; i--)	/* Calculo de coeficientes */
+     {
+     for (j = num_error_correction_codes - 1; j >= 0; j--)
+	    {
+	    c[j] = prodQR (c[j], root);
+	    if (j - 1 >= 0)
+	        c[j] ^= c[j - 1];
+    	}
+     root = prodQR (root, 0x02);
+     }
     
-    fin = num_error_correction_codes - 1;
-    for (i = 0; i < num_error_correction_codes/2; i++) /* Invertir el array de coeficientes */
-       {
-       int temp;
-       temp = c[i];
-       c[i]   = c[fin];
-       c[fin] = temp;
-       fin--;
-       }
 
     for (i = 0; i < num_data; i++)
        {
