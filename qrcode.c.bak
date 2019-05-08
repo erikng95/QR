@@ -74,8 +74,6 @@ static	void 	aplica_mascara_111					(struct BitmapQR *bm, struct BitmapQR *colis
 static	void 	QRcoloca_format_info				(struct QRcode *qrcode);
 static	uchar 	bitAtByte							(uchar dato, uchar pos);
 static	uchar 	getPixelAt							(int x, int y, struct BitmapQR *bm);
-uchar	*obtenBufParser								(void);
-uint	obtenNumDig									(void);
 
 //***********************************************************************/
 // VARIABLES LOCALES                                                    */
@@ -149,7 +147,7 @@ static void calcula_error_codes(uchar *data, uint num_data, uchar *error_codes, 
 {
     int i, j;
     uchar c[68], b[68];
-    int temp,fin;
+    int fin;
     int root=1;
 	
     for(i = 0; i < 68; i++)
@@ -176,6 +174,7 @@ static void calcula_error_codes(uchar *data, uint num_data, uchar *error_codes, 
     fin = num_error_correction_codes - 1;
     for (i = 0; i < num_error_correction_codes/2; i++) /* Invertir el array de coeficientes */
        {
+       int temp;
        temp = c[i];
        c[i]   = c[fin];
        c[fin] = temp;
