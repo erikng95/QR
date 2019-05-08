@@ -746,7 +746,7 @@ void QRcalcula_codigo_optimo(struct QRcode *qrcode, char *datos, uint longitud, 
     ResetWatchDog();
 
 
-	QRaplica_mascara(qrcode, 2);					
+	QRaplica_mascara(qrcode, 3);					
     ResetWatchDog();
 
 
