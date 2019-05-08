@@ -14,7 +14,6 @@
 #include "qrcode.h"
 #include "Comms\ProtocoloDebug232.h"
 #include "Assert.h"
-
   #if CORR_CAMBIO_FTO
 #include "RegistrosImpresion.h"
 #include ".\DrvHw\DrvFPGA.h"
