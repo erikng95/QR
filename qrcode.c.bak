@@ -562,7 +562,7 @@ void QRcalcula_codigo_optimo(struct QRcode *qrcode, char *datos, uint longitud, 
     {
         int penalizacion;
         QRaplica_mascara(qrcode, i);
-        penalizacion = QRcode_evalua_mascara(qrcode);
+        penalizacion = QRcode_evalua_mascara(qrcode, min_penalizacion);
         if(penalizacion < min_penalizacion)
         {
             min_penalizacion = penalizacion;

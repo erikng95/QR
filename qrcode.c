@@ -74,8 +74,6 @@ static	void 	aplica_mascara_111					(struct BitmapQR *bm, struct BitmapQR *colis
 static	void 	QRcoloca_format_info				(struct QRcode *qrcode);
 static	uchar 	bitAtByte							(uchar dato, uchar pos);
 static	uchar 	getPixelAt							(int x, int y, struct BitmapQR *bm);
-uchar	*obtenBufParser								(void);
-uint	obtenNumDig									(void);
 
 //***********************************************************************/
 // VARIABLES LOCALES                                                    */

@@ -120,7 +120,7 @@ static	uchar flg_nonum;
   #endif
 
   #if QR_CODE
-static  void    dup_qr						(uchar fil, uchar t, uchar n, struct QRcode *qrcode);
+static  void    dup_qr						(uchar fil, uchar t, uchar n);
 static  uchar 	dib_qr						(void);
   #endif
 
@@ -5409,7 +5409,7 @@ int rd_offset(void)
 // DUP_QR                                            29-Dic-17          */
 // Pasar de la imagen al string del qr.                                 */
 //***********************************************************************/
-void dup_qr(uchar fil, uchar t, uchar n, struct QRcode *qrcod)
+void dup_qr(uchar fil, uchar t, uchar n)
 {
    uchar a,i,c,m,j,k,d,mj,jj;
    uchar sizeRowBytes;
@@ -5482,7 +5482,7 @@ uchar 	dib_qr(void)
     
     for (i = 0; i<n; i++)
     {
-        dup_qr(i, tam, n, qrcod);
+        dup_qr(i, tam, n);
         lin_datamatrix(tam);				/* Dibujar cada linea del qr, se usa la misma funcion que el datamatrix */
     }
 
