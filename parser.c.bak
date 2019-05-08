@@ -124,7 +124,6 @@ static  void    dup_qr						(uchar fil, uchar t, uchar n);
 static  uchar 	dib_qr						(void);
 uchar   *obtenBufParser						(void);
 uint    obtenNumDig						    (void);
-extern  struct QRcode qrcod;
   #endif
 
 
@@ -5457,6 +5456,7 @@ uchar 	dib_qr(void)
 {
     uchar i, n, tam, sizeRowBytes;
     char aux[4];
+    struct QRcode *qrcod = (struct QRcode *)obtenQRcode();
     
 #if DOT_12
     alt = ((alt * 8) + 6) / 12;
