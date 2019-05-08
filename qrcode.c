@@ -43,12 +43,10 @@ static	void 	QRdata_encode_bytes					(struct QRcode *qrcode, char *data);
 static	uchar 	traduceDeMaquina					(uchar c);
 static	void 	QRgenera_bitmap						(struct QRcode *qrcode);
 static	void 	QRaplica_mascara					(struct QRcode *qrcode, uchar mascara);
- #if 0
 static	int 	QRcode_evalua_mascara				(struct QRcode *qrcode, uint min_penalizacion);
 static	int 	busqueda_cuadrado_2x2				(struct QRcode *qrcode, int x, int y, uchar xyValue);
 static	int 	busqueda_1_1_3_1_1_h				(struct QRcode *qrcode, int x, int y, uchar xyValue);
 static	int 	busqueda_1_1_3_1_1_v				(struct QRcode *qrcode, int x, int y, uchar xyValue);
- #endif
 static	void 	setPixelAt							(int x, int y, uchar valor, struct BitmapQR *bm);
 static	void 	QRgen_error_codes					(struct QRcode *qrcode);
 static	void 	genera_indices_datos				(int num_blocks_1, int num_codewords_1, int num_blocks_2, int num_codewords_2, int *result);
@@ -354,7 +352,6 @@ static void QRaplica_mascara(struct QRcode *qrcode, uchar mascara)
     }
 }
 
- #if 0
 // *********************************************************************************
 // static int busqueda_cuadrado_2x2(struct QRcode *qrcode, int x, int y)
 //
@@ -537,7 +534,7 @@ static int QRcode_evalua_mascara(struct QRcode *qrcode, uint min_penalizacion)
     return penalizacion;
 }
 
- #endif
+
 // *********************************************************************************
 // void QRcalcula_codigo_optimo(struct QRcode *qrcode, char *datos)
 //
@@ -558,7 +555,7 @@ void QRcalcula_codigo_optimo(struct QRcode *qrcode, char *datos, uint longitud, 
     ResetWatchDog();
 
 
-	QRaplica_mascara(qrcode, 2);					
+	QRaplica_mascara(qrcode, 3);					
     ResetWatchDog();
 
 
