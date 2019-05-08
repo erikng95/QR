@@ -544,22 +544,35 @@ static int QRcode_evalua_mascara(struct QRcode *qrcode, uint min_penalizacion)
 //********************************************************************************* */
 void QRcalcula_codigo_optimo(struct QRcode *qrcode, char *datos, uint longitud, uchar error_level)
 {
-
+    int i;
+    int min_penalizacion;
+    int mascara_min_penalizacion;    
+  
     QRdata_encode(qrcode, datos, longitud, error_level);
     ResetWatchDog();
     QRgen_error_codes(qrcode);
-
     ResetWatchDog();
-
     QRgenera_bitmap(qrcode);
     ResetWatchDog();
 
+    min_penalizacion = 1000000;
 
-	QRaplica_mascara(qrcode, 3);					
+	mascara_min_penalizacion = 0;
+    for(i = 0; i <= 7; i++)
+    {
+        int penalizacion;
+        QRaplica_mascara(qrcode, i);
+        penalizacion = QRcode_evalua_mascara(qrcode);
+        if(penalizacion < min_penalizacion)
+        {
+            min_penalizacion = penalizacion;
+            mascara_min_penalizacion = i;
+        }
+        QRaplica_mascara(qrcode, i);
+    }
+    
+    QRaplica_mascara(qrcode, mascara_min_penalizacion);
     ResetWatchDog();
-
-
-
     QRcoloca_format_info(qrcode);
     QRcoloca_version_information(qrcode);
     ResetWatchDog();
