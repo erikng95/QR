@@ -5482,7 +5482,7 @@ uchar 	dib_qr(void)
     
     for (i = 0; i<n; i++)
     {
-        dup_qr(i, tam, n, &qrcode->codigo);
+        dup_qr(i, tam, n, &qrcod->codigo);
         lin_datamatrix(tam);				/* Dibujar cada linea del qr, se usa la misma funcion que el datamatrix */
     }
 
