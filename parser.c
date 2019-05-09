@@ -5497,10 +5497,7 @@ uchar 	dib_qr(void)
 // **********************************************************************/
 uchar 	*obtenBufParser (void)
 {
-    i = 1;
-    if (buf_auxiliar_parser[1] == 0x13);
-        i++;
-	    return &buf_auxiliar_parser[i]; /* el +1 al buffer es por el caracter FNC1 que hay al comienzo */
+	return &buf_auxiliar_parser[1]; /* el +1 al buffer es por el caracter FNC1 que hay al comienzo */
 }
 
 //***********************************************************************/
@@ -5509,10 +5506,7 @@ uchar 	*obtenBufParser (void)
 //**************************************** ******************************/
 uint 	obtenNumDig (void)
 {
-    i = 1;
-    if (buf_auxiliar_parser[1] == 0x13);
-        i++; 
-	return (num_digitos_codigo_barras - i); /* el -1 a la longitud es por el caracter FNC1 que hay al comienzo */
+	return (num_digitos_codigo_barras - 1); /* el -1 a la longitud es por el caracter FNC1 que hay al comienzo */
 }
 
 #endif
