@@ -329,46 +329,46 @@ static void calcula_error_codes(uchar *data, uint num_data, uchar *error_codes, 
     int i, j;
     uchar c[68], b[68];
     int root=1;
-	
-    for(i = 0; i < 68; i++)
-    {
-        c[i] = 0;
-        b[i] = 0;
-    }
+
+    for (i = 0; i < 68; i++)
+      {
+      c[i] = 0;
+      b[i] = 0;
+      }
+
     for (i = 0; i <= num_error_correction_codes; i++)
         c[i] = 0;
 
-     c[0] = 1;
+    c[0] = 1;
     
-   for (i = num_error_correction_codes - 1; i >= 0; i--)	/* Calculo de coeficientes */
-     {
-     for (j = num_error_correction_codes - 1; j >= 0; j--)
+    for (i = num_error_correction_codes - 1; i >= 0; i--)	/* Calculo de coeficientes */
+      {
+      for (j = num_error_correction_codes - 1; j >= 0; j--)
 	    {
 	    c[j] = prodQR (c[j], root);
 	    if (j - 1 >= 0)
 	        c[j] ^= c[j - 1];
-    	}
-     root = prodQR (root, 0x02);
-     }
+        }
+      root = prodQR (root, 0x02);
+      }
     
 
     for (i = 0; i < num_data; i++)
-       {
-       uchar b65masin;
-       int j;
+      {
+      uchar b65masin;
+      int j;
 
-       b65masin = gadd(b[num_error_correction_codes-1], data[i]);
-       for (j = num_error_correction_codes-1; j > 0; j--)
-          {
-          b[j] = gadd(gmul(c[j], b65masin), b[j-1]);            
-          ResetWatchDog();
-          }
-
-       b[0] = gmul(c[0], b65masin);
-       }
+      b65masin = gadd(b[num_error_correction_codes-1], data[i]);
+      for (j = num_error_correction_codes-1; j > 0; j--)
+         {
+         b[j] = gadd(gmul(c[j], b65masin), b[j-1]);            
+         ResetWatchDog();
+         }
+      b[0] = gmul(c[0], b65masin);
+      }
 
     for (i = 0; i < num_error_correction_codes; i++)
-       error_codes[i] = b[num_error_correction_codes - 1 - i];
+        error_codes[i] = b[num_error_correction_codes - 1 - i];
 }
 
 //**********************************************************************************
@@ -381,13 +381,13 @@ static void calcula_error_codes(uchar *data, uint num_data, uchar *error_codes, 
 //**********************************************************************************
 static void QRcode_init(struct QRcode *qrcode, uint version, uint error_level)
 {
-    if( (version > 0 && version <= 40 && error_level >= 0 && error_level <= 3) == 0 )
+    if ((version > 0 && version <= 40 && error_level >= 0 && error_level <= 3) == 0 )
         return;
 
     if (versionLastQR != version)
-    {
-        ini_datamatrix();       /* vamos a utilizar las mismas tablas que el datamatrix */
-    }
+      {
+      ini_datamatrix();       /* vamos a utilizar las mismas tablas que el datamatrix */
+      }
 
     qrcode->version = version;
     qrcode->error_level = error_level;
@@ -442,9 +442,7 @@ static void QRcode_init(struct QRcode *qrcode, uint version, uint error_level)
 //********************************************************************************* */
 static void QRgenera_bitmap(struct QRcode *qrcode)
 {
-        int i,j;
-
-
+    int i,j;
     int ud = 0;
     int x = qrcode->codigo.size -1;
     int y = qrcode->codigo.size -1;
@@ -454,16 +452,16 @@ static void QRgenera_bitmap(struct QRcode *qrcode)
 
     for(i = 0; i < qrcode->num_codewords; i++)
     {
-        uchar valor;
-        valor = qrcode->bs.datos[QRbuffer_indices[i]];
-        for(j = 7; j >= 0; j--)
-        {
+       uchar valor;
+       valor = qrcode->bs.datos[QRbuffer_indices[i]];
+       for(j = 7; j >= 0; j--)
+          {
             uchar aux_bit;
             aux_bit = bitAtByte(valor, j);
             setPixelAt(x, y, aux_bit, &qrcode->codigo);
 			siguiente_libre(&qrcode->colisiones, &x, &y, &ud);
 			ResetWatchDog();
-        }
+          }
     }
 
     for(i = qrcode->num_codewords; i < qrcode->num_codewords + qrcode->num_error_codewords; i++)
