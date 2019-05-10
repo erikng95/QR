@@ -124,6 +124,8 @@ static  void    dup_qr						(uchar fil, uchar t, uchar n, struct BitmapQR *bm);
 static  uchar 	dib_qr						(void);
   #endif
 
+struct	COORD_XY	coord_xy[100];
+uchar	tipo_campo;
 
 //**************************************************************************************
 // TABLAS                                                                              *
@@ -174,7 +176,7 @@ const	ptr_fun	tbl_comandos_parser[MAX_COMANDOS_PARSER] = {
 	com_X,       /* 'Xnnn' */         	/* Anchura del logo           */
 	com_Y,       /* 'Ynnn' */         	/* Longitud del logo          */
 	com_Z,       /* 'Zmddd....' */    	/* Datos del logo             */
-	comnad,      /* '[' */            	/*                            */
+	com_ac,      /* '[xcc' */           /* Campo variable             */
 	comnad,      /* '\' */            	/*                            */
 	com_ct,      /* '^]xxx,yyyy'*/    	/* Tama¤o de pagina.          */
 	comnad,      /* '^' */            	/*                            */
@@ -740,6 +742,7 @@ void com_E(void)
    flag_generar_cter_control = TRUE;   	/* Caracter de control */
    if (get_ctr_parser() == 'D')
      flag_generar_cter_control = FALSE;
+   tipo_campo = 2;
 }
 
 //**************************************************************************************
@@ -943,6 +946,68 @@ void 	com_Z(void)
 {
 }
 
+/************************************************************************/
+/* COM_AC                               10-May-19                       */
+/* ^[xcc. Coordenadas campos variables.                                 */
+/************************************************************************/
+void com_ac(void)
+{
+   uchar c,n;
+
+   c = get_ctr_parser();
+   if (c == 0x1b)
+     {
+     flgesc = TRUE;
+     return;
+     }
+   n = rd_char_buffer_parser();
+   if (n < 0  ||  n > 99)
+     return;
+   if (c == '0')						/* Coger los datos */
+     {
+     if (tipo_campo == 0)
+       return;
+     coord_xy[n].def = tipo_campo;
+     coord_xy[n].x = h_pos;
+     coord_xy[n].y = v_pos;
+     coord_xy[n].r = rotacion;
+     if (tipo_campo == 1)				/* Font */
+       {
+       coord_xy[n].let = font;
+       coord_xy[n].xmag = xmag;
+       coord_xy[n].ymag = ymag;
+       coord_xy[n].ena = flg_negritas;
+       }
+     else								/* EAN */
+       {
+       coord_xy[n].let = alt;
+       coord_xy[n].ena = flag_generar_cter_control;
+       }
+     tipo_campo = 0;
+     return;
+     }
+   if (coord_xy[n].def != 0)			/* Poner los datos */
+     {
+     h_pos = coord_xy[n].x;
+     v_pos = coord_xy[n].y;
+     rotacion = coord_xy[n].r;
+     horpos = h_pos;
+     verpos = v_pos;
+     if (coord_xy[n].def == 1)			/* Font */
+       {
+       font = coord_xy[n].let;
+       xmag = coord_xy[n].xmag;
+       ymag = coord_xy[n].ymag;
+       flg_negritas = coord_xy[n].ena & 0x01;
+       }
+     else								/* EAN */
+       {
+       alt = coord_xy[n].let;
+       flag_generar_cter_control = coord_xy[n].ena;
+       }
+     }
+}
+
 //**************************************************************************************
 // COM_CT                               18-Nov-14                                      *
 // ^]xxx,yyyy. Tama¤o pagina.                                                          *
@@ -1049,6 +1114,17 @@ void com_c(void)
 {
    clrima();                            /* Borrar RAM imagen */
    size_y = 0;
+   for (i=0;i<100;i++)					/* Poner a 0 la estructura de las coordenadas */
+     {
+     coord_xy[i].def = FALSE;
+     coord_xy[i].x = 0;
+     coord_xy[i].y = 0;
+     coord_xy[i].r = 0;
+     coord_xy[i].let = 0;
+     coord_xy[i].xmag = 0;
+     coord_xy[i].ymag = 0;
+     coord_xy[i].ena = FALSE;
+     }
 }
 
 //**************************************************************************************
@@ -1642,6 +1718,7 @@ void rd_tipo_letra(uchar tl)
    c = get_ctr_parser();                /* Leer Y mag */
    c -= '0';
    ymag = c;
+   tipo_campo = 1;
 }
 
 //**************************************************************************************
