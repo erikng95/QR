@@ -259,7 +259,7 @@ static	uchar 	getPixelAt							(int x, int y, struct BitmapQR *bm);
 //***********************************************************************/
 // VARIABLES LOCALES                                                    */
 //***********************************************************************/
-uchar	versionLastQR = -1;
+uchar	versionLastQR;
 static	int		QRbuffer_indices[4096];
 struct	QRcode	qrcod;
 
@@ -381,7 +381,7 @@ static void calcula_error_codes(uchar *data, uint num_data, uchar *error_codes, 
 //**********************************************************************************
 static void QRcode_init(struct QRcode *qrcode, uint version, uint error_level)
 {
-    if ((version > 0 && version <= 40 && error_level >= 0 && error_level <= 3) == 0 )
+	if( (version > 0 && version <= 40 && error_level <= 3) == 0 )
         return;
 
     if (versionLastQR != version)
@@ -1227,8 +1227,8 @@ static void QRdata_encode_bytes(struct QRcode *qrcode, char *data)
 static int busca_version_necesaria(uchar error_level, uint longitud, uint tipo_codificacion)
 {
     int i;
-    uint longitud_encontrada;
-
+    uint longitud_encontrada = 0;
+    
     for(i = 0; i < 40; i++)
     {
         switch(error_level)
