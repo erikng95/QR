@@ -381,7 +381,7 @@ static void calcula_error_codes(uchar *data, uint num_data, uchar *error_codes, 
 //**********************************************************************************
 static void QRcode_init(struct QRcode *qrcode, uint version, uint error_level)
 {
-	if( (version > 0 && version <= 40 && error_level <= 3) == 0 )
+	if( (version > 0 && version <= 40 && error_level <= 1) == 0 )
         return;
 
     if (versionLastQR != version)

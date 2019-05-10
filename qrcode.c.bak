@@ -259,7 +259,7 @@ static	uchar 	getPixelAt							(int x, int y, struct BitmapQR *bm);
 //***********************************************************************/
 // VARIABLES LOCALES                                                    */
 //***********************************************************************/
-uchar	versionLastQR = -1;
+uchar	versionLastQR;
 static	int		QRbuffer_indices[4096];
 struct	QRcode	qrcod;
 
