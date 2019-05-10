@@ -147,7 +147,7 @@ static const uint error_correction_codewords[40][2] =
 /* Caracteristicas de los bloques de error correction para nivel L
    Tablas 13 a 22 del estandar
    numero de bloques, bytes de datos, bytes de error correction, numero de bloques, bytes de datos, bytes de error correction */
-static const unsigned int error_correction_characteristics_L [40][6] =
+static const unsigned int error_correction_character_L [40][6] =
 {
     {1, 19, 7, 0, 0, 0},
     {1, 34, 10, 0, 0, 0},
@@ -195,7 +195,7 @@ static const unsigned int error_correction_characteristics_L [40][6] =
 /* Caracteristicas de los bloques de error correction para nivel M
    Tablas 13 a 22 del estandar
    numero de bloques, bytes de datos, bytes de error correction, numero de bloques, bytes de datos, bytes de error correction */
-static const unsigned int error_correction_characteristics_M [40][6] =
+static const unsigned int error_correction_character_M [40][6] =
     {
         {1, 16, 10, 0, 0, 0 },
         {1, 28, 16, 0, 0, 0 },
