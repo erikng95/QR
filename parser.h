@@ -211,7 +211,7 @@ uchar 	rd_flg_negritas					(void);
 #define IA_C						28						/* Parentesis de los identificadores */
 #define IA_F						29
 
-typedef struct COORD_XY
+struct COORD_XY
 {
    uchar	def;
    int 		x;
