@@ -5577,6 +5577,10 @@ uchar 	*obtenBufParser (void)
 {
     int i,j=0;
 	IA_ap_cp = 0;
+    for(i=0;i<1024;i++)
+	{
+	    buf_qr[i]=0;
+	}
     for(i=0;i<num_digitos_codigo_barras;i++)
     {
     while (buf_auxiliar_parser[j] == IA_C  || buf_auxiliar_parser[j] == IA_F)		/* Los parentesis, nada */

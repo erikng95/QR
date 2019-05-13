@@ -37,7 +37,7 @@ static	uchar	buf_parser[LENPAR],flgesc,contraste_etiquetadora;
 static	uchar	rotacion,flag_generar_cter_control,size_y;
 static	uchar	densidad_ean;
   #if QR_CODE
-uchar	buf_auxiliar_parser[1024],num_digitos_codigo_barras;
+uchar	buf_auxiliar_parser[1024],buf_qr[1024],num_digitos_codigo_barras,IA_ap_cp;
   #else
 static	uchar	buf_auxiliar_parser[256],num_digitos_codigo_barras;
   #endif
@@ -120,7 +120,7 @@ static	uchar flg_nonum;
   #endif
 
   #if QR_CODE
-static  void    dup_qr						(uchar fil, uchar t, uchar n, struct BitmapQR *bm);
+static  void    dup_qr						(uchar fil, uchar t, uchar n, uchar *bm);
 static  uchar 	dib_qr						(void);
   #endif
 
@@ -1112,8 +1112,20 @@ int dist_salida;
 //**************************************************************************************
 void com_c(void)
 {
+   uchar i;
    clrima();                            /* Borrar RAM imagen */
    size_y = 0;
+   for (i=0;i<100;i++)					/* Poner a 0 la estructura de las coordenadas */
+     {
+     coord_xy[i].def = FALSE;
+     coord_xy[i].x = 0;
+     coord_xy[i].y = 0;
+     coord_xy[i].r = 0;
+     coord_xy[i].let = 0;
+     coord_xy[i].xmag = 0;
+     coord_xy[i].ymag = 0;
+     coord_xy[i].ena = FALSE;
+     }
 }
 
 //**************************************************************************************
@@ -5258,7 +5270,7 @@ static	void int128(uchar n)
 		/* LC */
 		  if (buf_auxiliar_parser[i] < ' ')
 			continue;
-          if (flg_datamatrix == TRUE)
+          if (flg_datamatrix == TRUE || flg_qr == TRUE)
             {
 		  if (CodepageImpresion == CODEPAGE_850)
 		    {
@@ -5475,7 +5487,7 @@ int rd_offset(void)
 // DUP_QR                                            29-Dic-17          */
 // Pasar de la imagen al string del qr.                                 */
 //***********************************************************************/
-void dup_qr(uchar fil, uchar t, uchar n, struct BitmapQR *bm)
+void dup_qr(uchar fil, uchar t, uchar n, uchar *bm)
 {
    uchar a,i,c,m,j,k,d,mj,jj;
    uchar sizeRowBytes;
@@ -5548,7 +5560,7 @@ uchar 	dib_qr(void)
     
     for (i = 0; i<n; i++)
     {
-        dup_qr(i, tam, n, &qrcod->codigo);
+        dup_qr(i, tam, n, &qrcod->codigo.m[0]);
         lin_datamatrix(tam);				/* Dibujar cada linea del qr, se usa la misma funcion que el datamatrix */
     }
 
@@ -5563,7 +5575,19 @@ uchar 	dib_qr(void)
 // **********************************************************************/
 uchar 	*obtenBufParser (void)
 {
-	return &buf_auxiliar_parser[1]; /* el +1 al buffer es por el caracter FNC1 que hay al comienzo */
+    int i,j=0;
+	IA_ap_cp = 0;
+    for(i=0;i<num_digitos_codigo_barras;i++)
+    {
+    while (buf_auxiliar_parser[j] == IA_C  || buf_auxiliar_parser[j] == IA_F)		/* Los parentesis, nada */
+       {
+	   j++;
+	   IA_ap_cp++;
+	   }
+    buf_qr[i] = buf_auxiliar_parser[j];
+    j++;
+    }
+	return &buf_qr[1]; /* el +1 al buffer es por el caracter FNC1 que hay al comienzo */
 }
 
 //***********************************************************************/
@@ -5572,7 +5596,7 @@ uchar 	*obtenBufParser (void)
 //**************************************** ******************************/
 uint 	obtenNumDig (void)
 {
-	return (num_digitos_codigo_barras - 1); /* el -1 a la longitud es por el caracter FNC1 que hay al comienzo */
+	return (num_digitos_codigo_barras - (1+IA_ap_cp)); /* el -1 a la longitud es por el caracter FNC1 que hay al comienzo */
 }
 
 #endif
