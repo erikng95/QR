@@ -299,16 +299,18 @@ static	uchar 	gadd							    (uchar a, uchar b);
 static	uchar 	gmul							    (uchar a, uchar b);
 static	uint 	prodQR							    (uint x, uint y);
 static	void 	calcula_error_codes					(uchar *data, uint num_data, uchar *error_codes, uint num_error_correction_codes);
-static	void 	QRdata_encode_alphanumeric			(struct QRcode *qrcode, char *data);
-static	void 	QRdata_encode_numeric				(struct QRcode *qrcode, char *data);
-static	void 	QRdata_encode_bytes					(struct QRcode *qrcode, char *data);
+static	void 	QRdata_encode_alphanumeric			(struct QRcode *qrcode, char *data, uint data_length);
+static	void 	QRdata_encode_numeric				(struct QRcode *qrcode, char *data, uint data_length);
+static	void 	QRdata_encode_bytes					(struct QRcode *qrcode, char *data, uint data_length);
 static	uchar 	traduceDeMaquina					(uchar c);
 static	void 	QRgenera_bitmap						(struct QRcode *qrcode);
 static	void 	QRaplica_mascara					(struct QRcode *qrcode, uchar mascara);
+ #if 0
 static	int 	QRcode_evalua_mascara				(struct QRcode *qrcode, uint min_penalizacion);
 static	int 	busqueda_cuadrado_2x2				(struct QRcode *qrcode, int x, int y, uchar xyValue);
 static	int 	busqueda_1_1_3_1_1_h				(struct QRcode *qrcode, int x, int y, uchar xyValue);
 static	int 	busqueda_1_1_3_1_1_v				(struct QRcode *qrcode, int x, int y, uchar xyValue);
+ #endif
 static	void 	setPixelAt							(int x, int y, uchar valor, struct BitmapQR *bm);
 static	void 	QRgen_error_codes					(struct QRcode *qrcode);
 static	void 	genera_indices_datos				(int num_blocks_1, int num_codewords_1, int num_blocks_2, int num_codewords_2, int *result);
@@ -600,7 +602,7 @@ static void QRaplica_mascara(struct QRcode *qrcode, uchar mascara)
         break;
     }
 }
-
+ #if 0
 // *********************************************************************************
 // static int busqueda_cuadrado_2x2(struct QRcode *qrcode, int x, int y)
 //
@@ -782,7 +784,7 @@ static int QRcode_evalua_mascara(struct QRcode *qrcode, uint min_penalizacion)
     
     return penalizacion;
 }
-
+ #endif
 
 // *********************************************************************************
 // void QRcalcula_codigo_optimo(struct QRcode *qrcode, char *datos)
@@ -793,9 +795,11 @@ static int QRcode_evalua_mascara(struct QRcode *qrcode, uint min_penalizacion)
 //********************************************************************************* */
 void QRcalcula_codigo_optimo(struct QRcode *qrcode, char *datos, uint longitud, uchar error_level)
 {
+ #if 0
     int i;
     int min_penalizacion;
     int mascara_min_penalizacion;    
+ #endif
   
     QRdata_encode(qrcode, datos, longitud, error_level);
     ResetWatchDog();
@@ -803,7 +807,7 @@ void QRcalcula_codigo_optimo(struct QRcode *qrcode, char *datos, uint longitud, 
     ResetWatchDog();
     QRgenera_bitmap(qrcode);
     ResetWatchDog();
-
+ #if 0
     min_penalizacion = 1000000;
 
 	mascara_min_penalizacion = 0;
@@ -821,6 +825,9 @@ void QRcalcula_codigo_optimo(struct QRcode *qrcode, char *datos, uint longitud, 
     }
     
     QRaplica_mascara(qrcode, mascara_min_penalizacion);
+ #endif
+ 
+    QRaplica_mascara(qrcode, 3);
     ResetWatchDog();
     QRcoloca_format_info(qrcode);
     QRcoloca_version_information(qrcode);
@@ -958,7 +965,7 @@ static uchar ascii2alphanumeric(uchar c)
 //
 // Codifica el string *data utilizando el modo alfanumerico
 //**********************************************************************************
-static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data)
+static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data, uint data_length)
 {
     int i;
     unsigned char pad[2] = {0xEC, 0x11};
@@ -966,7 +973,7 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data)
     unsigned int cuantos_pares, ultimo;
     unsigned int length_padding;
 
-    unsigned int data_length;
+
 
     unsigned int version;
     unsigned int n_code_data;
@@ -976,7 +983,7 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data)
 
     struct BitStringQR *bs;
 
-    data_length = strlen(data);
+
 
     version = qrcode->version;
     n_code_data = qrcode->num_codewords;
@@ -1047,7 +1054,7 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data)
 //
 //Codifica en modo numerico el string *data (que solo debe contener numeros)
 //**********************************************************************************
-static void QRdata_encode_numeric(struct QRcode *qrcode, char *data)
+static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_length)
 {
     int i;
     unsigned char pad[2] = {0xEC, 0x11};
@@ -1055,7 +1062,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data)
     unsigned int cuantos_trios, ultimo;
     unsigned int length_padding;
 
-    unsigned int data_length;
+
 
     unsigned int version;
     unsigned int n_code_data;
@@ -1063,7 +1070,6 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data)
 
     struct BitStringQR *bs;
 
-    data_length = strlen(data);
 
     version = qrcode->version;
     n_code_data = qrcode->num_codewords;
@@ -1206,7 +1212,7 @@ static uchar traduceDeMaquina(uchar c)
 //
 // Codifica el string *data utilizando el modo bytes
 //********************************************************************************* */
-static void QRdata_encode_bytes(struct QRcode *qrcode, char *data)
+static void QRdata_encode_bytes(struct QRcode *qrcode, char *data, uint data_length)
 {
     int i;
    unsigned char pad[2] = {0xEC, 0x11};
@@ -1214,7 +1220,7 @@ static void QRdata_encode_bytes(struct QRcode *qrcode, char *data)
 
     unsigned int length_padding;
 
-    unsigned int data_length;
+
 
     unsigned int version;
     unsigned int n_code_data;
@@ -1224,7 +1230,6 @@ static void QRdata_encode_bytes(struct QRcode *qrcode, char *data)
 
     struct BitStringQR *bs;
 
-    data_length = strlen(data);
 
     version = qrcode->version;
     n_code_data = qrcode->num_codewords;
@@ -1365,15 +1370,15 @@ static void QRdata_encode(struct QRcode *qrcode, char *datos, uint longitud, uch
 
     if (tipoMsg == 0)
     {
-        QRdata_encode_numeric(qrcode, datos);
+        QRdata_encode_numeric(qrcode, datos, longitud);
     }
     else if (tipoMsg == 1)
     {
-        QRdata_encode_alphanumeric(qrcode, datos);
+        QRdata_encode_alphanumeric(qrcode, datos, longitud);
     }
     else
     {
-        QRdata_encode_bytes(qrcode, datos);
+        QRdata_encode_bytes(qrcode, datos, longitud);
     }
 }
 
@@ -2199,7 +2204,7 @@ int pos_format2[15][2] = { {8,20}, {8,19}, {8,18}, {8,17}, {8,16}, {8,15}, {8,14
 uchar b[32][2] = {
                         {0x54, 0x12}, {0x51, 0x25}, {0x5E, 0x7C}, {0x5B, 0x4B}, {0x45, 0xF9},
                         {0x40, 0xCE}, {0x4F, 0x97}, {0x4A, 0xA0}, {0x77, 0xC4}, {0x72, 0xF3},
-                        {0x7D, 0xAA}, {0x78, 0x9D}, {0x66, 0x2F}, {0x63, 0x14}, {0x6C, 0x41},
+                        {0x7D, 0xAA}, {0x78, 0x9D}, {0x66, 0x2F}, {0x63, 0x18}, {0x6C, 0x41},
                         {0x69, 0x76}, {0x16, 0x89}, {0x13, 0xBE}, {0x1C, 0xE7}, {0x19, 0xD0},
                         {0x07, 0x62}, {0x02, 0x55}, {0x0D, 0x0C}, {0x08, 0x3B}, {0x35, 0x5F},
                         {0x30, 0x68}, {0x3F, 0x31}, {0x3A, 0x06}, {0x24, 0xB4}, {0x21, 0x83},
