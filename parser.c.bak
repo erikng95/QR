@@ -37,7 +37,7 @@ static	uchar	buf_parser[LENPAR],flgesc,contraste_etiquetadora;
 static	uchar	rotacion,flag_generar_cter_control,size_y;
 static	uchar	densidad_ean;
   #if QR_CODE
-uchar	buf_auxiliar_parser[1024],buf_qr[1024],num_digitos_codigo_barras,IA_ap_cp;
+uchar	buf_auxiliar_parser[1024],buf_qr[1024],num_digitos_codigo_barras,IA_C_F;
   #else
 static	uchar	buf_auxiliar_parser[256],num_digitos_codigo_barras;
   #endif
@@ -5576,13 +5576,14 @@ uchar 	dib_qr(void)
 uchar 	*obtenBufParser (void)
 {
     int i,j=0;
-	IA_ap_cp = 0;
+	IA_C_F = 0;
+
     for(i=0;i<num_digitos_codigo_barras;i++)
     {
     while (buf_auxiliar_parser[j] == IA_C  || buf_auxiliar_parser[j] == IA_F)		/* Los parentesis, nada */
        {
 	   j++;
-	   IA_ap_cp++;
+	   IA_C_F++;
 	   }
     buf_qr[i] = buf_auxiliar_parser[j];
     j++;
@@ -5596,7 +5597,7 @@ uchar 	*obtenBufParser (void)
 //**************************************** ******************************/
 uint 	obtenNumDig (void)
 {
-	return (num_digitos_codigo_barras - (1+IA_ap_cp)); /* el -1 a la longitud es por el caracter FNC1 que hay al comienzo */
+	return (num_digitos_codigo_barras - (1+IA_C_F)); /* el -1 a la longitud es por el caracter FNC1 que hay al comienzo */
 }
 
 #endif
