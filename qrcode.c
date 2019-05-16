@@ -1150,13 +1150,6 @@ static uchar traduceDeMaquina(uchar c)
 {
     switch (c)
     {
-    case 0x1C: /* ( */
-        c = 0x28;
-        break;
-    case 0x1D: /* ) */
-        c = 0x29;
-        break;
-
     case 0x96: /* á */
         c = 0xE1;
         break;
