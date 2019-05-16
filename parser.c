@@ -5580,7 +5580,7 @@ uchar 	*obtenBufParser (void)
     
     for(i=1;i<num_digitos_codigo_barras;i++)
     {
-    if (buf_auxiliar_parser[i] == IA_C  || buf_auxiliar_parser[i] == IA_F)		/* Los parentesis, nada */
+    if (buf_auxiliar_parser[i] == IA_C  || buf_auxiliar_parser[i] == IA_F || buf_auxiliar_parser[i] == CAMBIO_A || buf_auxiliar_parser[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
        {
 	   IA_C_F++;
 	   continue;
