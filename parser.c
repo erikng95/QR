@@ -5576,16 +5576,15 @@ uchar 	dib_qr(void)
 uchar 	*obtenBufParser (void)
 {
     int i,j=0;
-	IA_C_F = 0;
 
     for(i=0;i<num_digitos_codigo_barras;i++)
     {
-    while (buf_auxiliar_parser[j] == IA_C  || buf_auxiliar_parser[j] == IA_F)		/* Los parentesis, nada */
+    if (buf_auxiliar_parser[i] == IA_C  || buf_auxiliar_parser[i] == IA_F)		/* Los parentesis, nada */
        {
-	   j++;
 	   IA_C_F++;
+	   continue;
 	   }
-    buf_qr[i] = buf_auxiliar_parser[j];
+    buf_qr[j] = buf_auxiliar_parser[i];
     j++;
     }
 	return &buf_qr[1]; /* el +1 al buffer es por el caracter FNC1 que hay al comienzo */
