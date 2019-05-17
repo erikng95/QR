@@ -282,7 +282,7 @@ static const uint coordenadas_alignment_patterns[40][8] =
     { 7, 6, 28, 54, 80, 106, 132, 158},
     { 7, 6, 32, 58, 84, 110, 136, 162},
     { 7, 6, 26, 54, 82, 110, 138, 166},
-    { 7, 6, 30, 58, 86, 114, 142, 170},
+    { 7, 6, 30, 58, 86, 114, 142, 170}
 };
 
 /* Informacion de la version (Pagina 79 del estandar) */
@@ -418,9 +418,6 @@ static void calcula_error_codes(uchar *data, uint num_data, uchar *error_codes, 
       c[i] = 0;
       b[i] = 0;
       }
-
-    for (i = 0; i <= num_error_correction_codes; i++)
-        c[i] = 0;
 
     c[0] = 1;
     

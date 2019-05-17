@@ -282,7 +282,7 @@ static const uint coordenadas_alignment_patterns[40][8] =
     { 7, 6, 28, 54, 80, 106, 132, 158},
     { 7, 6, 32, 58, 84, 110, 136, 162},
     { 7, 6, 26, 54, 82, 110, 138, 166},
-    { 7, 6, 30, 58, 86, 114, 142, 170},
+    { 7, 6, 30, 58, 86, 114, 142, 170}
 };
 
 /* Informacion de la version (Pagina 79 del estandar) */
@@ -1150,13 +1150,6 @@ static uchar traduceDeMaquina(uchar c)
 {
     switch (c)
     {
-    case 0x1C: /* ( */
-        c = 0x28;
-        break;
-    case 0x1D: /* ) */
-        c = 0x29;
-        break;
-
     case 0x96: /* á */
         c = 0xE1;
         break;

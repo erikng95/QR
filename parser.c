@@ -961,7 +961,7 @@ void com_ac(void)
      return;
      }
    n = rd_char_buffer_parser();
-   if (n < 1  ||  n > 99)
+   if (n > 99)
      return;
    if (c == '0')						/* Coger los datos */
      {
