@@ -1539,7 +1539,7 @@ static void inicializa_bitmap(int size, struct BitmapQR *bm)
 {
     int i;
     bm->size = size;
-    for(i = 0; i < 3360; i++)
+    for(i = 0; i < 4100; i++)
 	{
 		ResetWatchDog();
         bm->m[i] = 0;

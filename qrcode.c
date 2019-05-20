@@ -302,7 +302,6 @@ static	void 	calcula_error_codes					(uchar *data, uint num_data, uchar *error_c
 static	void 	QRdata_encode_alphanumeric			(struct QRcode *qrcode, char *data, uint data_length);
 static	void 	QRdata_encode_numeric				(struct QRcode *qrcode, char *data, uint data_length);
 static	void 	QRdata_encode_bytes					(struct QRcode *qrcode, char *data, uint data_length);
-static	uchar 	traduceDeMaquina					(uchar c);
 static	void 	QRgenera_bitmap						(struct QRcode *qrcode);
 static	void 	QRaplica_mascara					(struct QRcode *qrcode, uchar mascara);
  #if 0
@@ -1136,66 +1135,6 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
 
 }
 
-// *********************************************************************************
-// void traduceDeMaquina(char* data, unsigned int pos)
-//
-// Traduce algunos caracteres del codepage de la máquina a ISO Latin 1 (ISO/IEC 8859-1) 
-// que es el que usa el QR sino se especifica ECI. EL 8859-1 es igual que el ASCII hasta 127
-// y luego lleva su tabla del 128 al 255 https://es.wikipedia.org/wiki/ISO/IEC_8859-1
-//********************************************************************************* */
-static uchar traduceDeMaquina(uchar c)
-{
-    switch (c)
-    {
-    case 0x96: /* á */
-        c = 0xE1;
-        break;
-    case 0x9A: /* é */
-        c = 0xE9;
-        break;
-    case 0x9E: /* í */
-        c = 0xED;
-        break;
-    case 0xA2: /* ó */
-        c = 0xF3;
-        break;
-    case 0xA6:/* ú */
-        c = 0xFA;
-        break;
-       
-    case 0x82: /* Á */
-        c = 0xC1;
-        break;
-    case 0x86: /* É */
-        c = 0xC9;
-        break;
-    case 0x8A: /* Í */
-        c = 0xCD;
-        break;
-    case 0x8E: /* Ó */
-        c = 0xD3;
-        break;
-    case 0x92: /* Ú */
-        c = 0xDA;
-        break;
-
-    case 0xD0: /* Ç */
-        c = 0xC7;
-        break;
-    case 0xD1: /* ç */
-        c = 0xE7;
-        break;
-        
-    case 0xD2: /* Ñ */
-        c = 0xD1;
-        break;
-    case 0xD3: /* ñ */
-        c = 0xF1;
-        break;
-        
-    }
-    return c;
-}
 
 // *********************************************************************************
 // static void QRdata_encode_bytes(struct QRcode *qrcode, char *data, unsigned int longitud)
@@ -1249,7 +1188,7 @@ static void QRdata_encode_bytes(struct QRcode *qrcode, char *data, uint data_len
 
     for(i = 0; i < data_length; i++)
     {
-        caracter1 = traduceDeMaquina(data[i]);
+        caracter1 = data[i];
 		insert_n_bitsQR(bs, caracter1, 8);
 		ResetWatchDog(); //CORRIGE RESETEO
     }
