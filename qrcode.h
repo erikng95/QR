@@ -13,7 +13,7 @@ uint	obtenNumDig						    (void);
 struct BitmapQR
 {
 	int size; 	/* 21 a 93 con saltos de 4 en 4 */
-	unsigned char m[3360];
+	unsigned char m[4100];
 };
 
 struct BitStringQR 

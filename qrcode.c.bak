@@ -419,9 +419,6 @@ static void calcula_error_codes(uchar *data, uint num_data, uchar *error_codes, 
       b[i] = 0;
       }
 
-    for (i = 0; i <= num_error_correction_codes; i++)
-        c[i] = 0;
-
     c[0] = 1;
     
     for (i = num_error_correction_codes - 1; i >= 0; i--)	/* Calculo de coeficientes */
