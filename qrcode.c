@@ -963,7 +963,7 @@ static uchar ascii2alphanumeric(uchar c)
 //**********************************************************************************
 static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data, uint data_length)
 {
-    int i,j;
+    int i,j=0;
     char d[3706];
     int cter_ctrl=0;
     unsigned char pad[2] = {0xEC, 0x11};
@@ -1066,7 +1066,7 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data, uint d
 //**********************************************************************************
 static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_length)
 {
-    int i,j;
+    int i,j=0;
 	char d[3706];
     int cter_ctrl=0;
     unsigned char pad[2] = {0xEC, 0x11};
@@ -1170,7 +1170,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
 //********************************************************************************* */
 static void QRdata_encode_bytes(struct QRcode *qrcode, char *data, uint data_length)
 {
-    int i,j;
+    int i,j=0;
     int cter_ctrl = 0;
     char d[3706];
    unsigned char pad[2] = {0xEC, 0x11};
