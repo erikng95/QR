@@ -47,7 +47,7 @@ static	uchar	ORG_DATAMATRIX[144*18];
 static	uchar	ORG_BARRAS_STACKED[1166],ORG_CODIGO_BARRAS[1166],ORG_SEPARADORES[1166];
 static	uchar	ORG_SEP_STACKED[1166],bytlin;
 static	int		indice_rd_parser,indice_wr_parser,num_copias,xpag,ypag;
-static	int		h_pos,v_pos,horpos,verpos,font,alt,altpos,largo,ancho,grosor;
+static	int		h_pos,v_pos,horpos,verpos,font,alt,largo,ancho,grosor;
 static	int		bits_in_row,CodepageImpresion,ind_bitstr,hposter,bits_in_last_row;
 #if CORR_DATABAR_EXP_STACK
 static	int 	xpag,ypag;	
@@ -734,7 +734,6 @@ void com_E(void)
   #if DOT_12
    alt = (alt * 12) / 8;
   #endif
-   altpos = alt;
    if (get_ctr_parser() == 0x1b)       	/* Leer "," */
      {
      flgesc = TRUE;
@@ -969,8 +968,8 @@ void com_ac(void)
      if (tipo_campo == 0)
        return;
      coord_xy[n].def = tipo_campo;
-     coord_xy[n].x   = horpos;
-     coord_xy[n].y   = verpos;
+     coord_xy[n].x   = h_pos;
+     coord_xy[n].y   = v_pos;
      coord_xy[n].r   = rotacion;
      if (tipo_campo == 1)				/* Font */
        {
@@ -981,7 +980,7 @@ void com_ac(void)
        }
      else								/* EAN */
        {
-       coord_xy[n].let = altpos;
+       coord_xy[n].let = alt;
        coord_xy[n].ena = flag_generar_cter_control;
        }
      tipo_campo = 0;
