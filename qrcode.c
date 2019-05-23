@@ -965,7 +965,7 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data, uint d
 {
     int i,j;
     char d[3706];
-    int IA_C_F=0;
+    int cter_ctrl=0;
     unsigned char pad[2] = {0xEC, 0x11};
 
     unsigned int cuantos_pares, ultimo;
@@ -1000,14 +1000,14 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data, uint d
     {
     if (data[i] == IA_C  || data[i] == IA_F || data[i] == CAMBIO_A || data[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
        {
-	   IA_C_F++;
+	   cter_ctrl++;
 	   continue;
 	   }
 	caracter1 = data[i];
     d[j] = caracter1;
     j++;
     }
-    data_length -= IA_C_F;
+    data_length -= cter_ctrl;
     insert_n_bitsQR(bs, data_length, char_count_indicator);
 	ResetWatchDog();
 
@@ -1068,7 +1068,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
 {
     int i,j;
 	char d[3706];
-    int IA_C_F=0;
+    int cter_ctrl=0;
     unsigned char pad[2] = {0xEC, 0x11};
 
     unsigned int cuantos_trios, ultimo;
@@ -1099,13 +1099,13 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
     {
     if (data[i] == IA_C  || data[i] == IA_F || data[i] == CAMBIO_A || data[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
        {
-	   IA_C_F++;
+	   cter_ctrl++;
 	   continue;
 	   }
     d[j] = data[i];
     j++;
     }
-    data_length -= IA_C_F;
+    data_length -= cter_ctrl;
     insert_n_bitsQR(bs, data_length, char_count_indicator);
 
     cuantos_trios = data_length / 3;
@@ -1171,7 +1171,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
 static void QRdata_encode_bytes(struct QRcode *qrcode, char *data, uint data_length)
 {
     int i,j;
-    int IA_C_F = 0;
+    int cter_ctrl = 0;
     char d[3706];
    unsigned char pad[2] = {0xEC, 0x11};
 
@@ -1217,14 +1217,14 @@ static void QRdata_encode_bytes(struct QRcode *qrcode, char *data, uint data_len
     {
     if (data[i] == IA_C  || data[i] == IA_F || data[i] == CAMBIO_A || data[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
        {
-	   IA_C_F++;
+	   cter_ctrl++;
 	   continue;
 	   }
 	caracter1 = data[i];
     d[j] = caracter1;
     j++;
     }
-    data_length -= IA_C_F;
+    data_length -= cter_ctrl;
     insert_n_bitsQR(bs, data_length, char_count_indicator);
 
     for(i = 0; i < data_length; i++)
