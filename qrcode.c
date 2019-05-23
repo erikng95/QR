@@ -1052,7 +1052,8 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data, uint d
 //**********************************************************************************
 static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_length)
 {
-    int i;
+    int i,j;
+    uchar IA_C_F;
     unsigned char pad[2] = {0xEC, 0x11};
 
     unsigned int cuantos_trios, ultimo;
@@ -1079,6 +1080,17 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
         char_count_indicator = 14;
 
     insert_n_bitsQR(bs, 0x1, 4);
+    for(i=0;i<data_length;i++)
+    {
+    if (data[i] == IA_C  || data[i] == IA_F || data[i] == CAMBIO_A || data[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
+       {
+	   IA_C_F++;
+	   continue;
+	   }
+    data[j] = data[i];
+    j++;
+    }
+    data_length -= IA_C_F;
     insert_n_bitsQR(bs, data_length, char_count_indicator);
 
     cuantos_trios = data_length / 3;

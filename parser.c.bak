@@ -37,7 +37,7 @@ static	uchar	buf_parser[LENPAR],flgesc,contraste_etiquetadora;
 static	uchar	rotacion,flag_generar_cter_control,size_y;
 static	uchar	densidad_ean;
   #if QR_CODE
-uchar	buf_auxiliar_parser[1024],buf_qr[1024],num_digitos_codigo_barras,IA_C_F;
+uchar	buf_auxiliar_parser[1024],num_digitos_codigo_barras;
   #else
 static	uchar	buf_auxiliar_parser[256],num_digitos_codigo_barras;
   #endif
@@ -47,7 +47,7 @@ static	uchar	ORG_DATAMATRIX[144*18];
 static	uchar	ORG_BARRAS_STACKED[1166],ORG_CODIGO_BARRAS[1166],ORG_SEPARADORES[1166];
 static	uchar	ORG_SEP_STACKED[1166],bytlin;
 static	int		indice_rd_parser,indice_wr_parser,num_copias,xpag,ypag;
-static	int		h_pos,v_pos,horpos,verpos,font,alt,largo,ancho,grosor;
+static	int		h_pos,v_pos,horpos,verpos,font,alt,altpos,largo,ancho,grosor;
 static	int		bits_in_row,CodepageImpresion,ind_bitstr,hposter,bits_in_last_row;
 #if CORR_DATABAR_EXP_STACK
 static	int 	xpag,ypag;	
@@ -734,6 +734,7 @@ void com_E(void)
   #if DOT_12
    alt = (alt * 12) / 8;
   #endif
+   altpos = alt;
    if (get_ctr_parser() == 0x1b)       	/* Leer "," */
      {
      flgesc = TRUE;
@@ -947,7 +948,7 @@ void 	com_Z(void)
 }
 
 /************************************************************************/
-/* COM_AC                               10-May-19                       */
+/* COM_AC                               20-May-19                       */
 /* ^[xcc. Coordenadas campos variables.                                 */
 /************************************************************************/
 void com_ac(void)
@@ -961,26 +962,26 @@ void com_ac(void)
      return;
      }
    n = rd_char_buffer_parser();
-   if (n < 1  ||  n > 99)
+   if (n > 99)
      return;
    if (c == '0')						/* Coger los datos */
      {
      if (tipo_campo == 0)
        return;
      coord_xy[n].def = tipo_campo;
-     coord_xy[n].x = h_pos;
-     coord_xy[n].y = v_pos;
-     coord_xy[n].r = rotacion;
+     coord_xy[n].x   = horpos;
+     coord_xy[n].y   = verpos;
+     coord_xy[n].r   = rotacion;
      if (tipo_campo == 1)				/* Font */
        {
-       coord_xy[n].let = font;
+       coord_xy[n].let  = font;
        coord_xy[n].xmag = xmag;
        coord_xy[n].ymag = ymag;
-       coord_xy[n].ena = flg_negritas;
+       coord_xy[n].ena  = flg_negritas;
        }
      else								/* EAN */
        {
-       coord_xy[n].let = alt;
+       coord_xy[n].let = altpos;
        coord_xy[n].ena = flag_generar_cter_control;
        }
      tipo_campo = 0;
@@ -5575,20 +5576,7 @@ uchar 	dib_qr(void)
 // **********************************************************************/
 uchar 	*obtenBufParser (void)
 {
-    int i,j=0;
-    IA_C_F = 0;
-    
-    for(i=1;i<num_digitos_codigo_barras;i++)
-    {
-    if (buf_auxiliar_parser[i] == IA_C  || buf_auxiliar_parser[i] == IA_F || buf_auxiliar_parser[i] == CAMBIO_A || buf_auxiliar_parser[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
-       {
-	   IA_C_F++;
-	   continue;
-	   }
-    buf_qr[j] = buf_auxiliar_parser[i];
-    j++;
-    }
-	return &buf_qr[0]; /* el +1 al buffer es por el caracter FNC1 que hay al comienzo */
+	return &buf_qr[1]; /* el +1 al buffer es por el caracter FNC1 que hay al comienzo */
 }
 
 //***********************************************************************/
@@ -5597,7 +5585,7 @@ uchar 	*obtenBufParser (void)
 //**************************************** ******************************/
 uint 	obtenNumDig (void)
 {
-	return (num_digitos_codigo_barras - (1+IA_C_F)); /* el -1 a la longitud es por el caracter FNC1 que hay al comienzo */
+	return (num_digitos_codigo_barras - (1)); /* el -1 a la longitud es por el caracter FNC1 que hay al comienzo */
 }
 
 #endif
