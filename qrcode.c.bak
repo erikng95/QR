@@ -1082,7 +1082,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
     insert_n_bitsQR(bs, 0x1, 4);
     for(i=0;i<data_length;i++)
     {
-    if (buf_auxiliar_parser[i] == IA_C  || buf_auxiliar_parser[i] == IA_F || buf_auxiliar_parser[i] == CAMBIO_A || buf_auxiliar_parser[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
+    if (data[i] == IA_C  || data[i] == IA_F || data[i] == CAMBIO_A || data[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
        {
 	   IA_C_F++;
 	   continue;
@@ -1282,6 +1282,8 @@ uchar getTipoMsg(char* datos, uint longitud)
 
     for (i = 0; (i < longitud) && (bNumerica | bAlfaNumerica); i++)
     {
+        if (datos[i] == IA_C  || data[i] == IA_F || data[i] == CAMBIO_A || data[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
+	      continue;
         if (datos[i] < 0x30 || datos[i] > 0x39)
             bNumerica = 0;
         

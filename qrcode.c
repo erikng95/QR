@@ -1053,6 +1053,7 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data, uint d
 static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_length)
 {
     int i,j;
+	char d[1000];
     uchar IA_C_F;
     unsigned char pad[2] = {0xEC, 0x11};
 
@@ -1087,10 +1088,9 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
 	   IA_C_F++;
 	   continue;
 	   }
-    data[j] = data[i];
+    d[j] = data[i];
     j++;
     }
-    data_length -= IA_C_F;
     insert_n_bitsQR(bs, data_length, char_count_indicator);
 
     cuantos_trios = data_length / 3;
@@ -1100,7 +1100,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
     {
         unsigned int aux;
         //El menos 0x30 es para pasar de ASCII a digito binario
-        aux = (data[i*3 + 0] - 0x30)*100 + (data[i*3 + 1] - 0x30)*10 + (data[i*3 + 2] - 0x30)*1;
+        aux = (d[i*3 + 0] - 0x30)*100 + (d[i*3 + 1] - 0x30)*10 + (d[i*3 + 2] - 0x30)*1;
         insert_n_bitsQR(bs, aux, 10);
 		ResetWatchDog(); //CORRIGE RESETEO
     }
@@ -1109,7 +1109,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
     {
         unsigned int aux;
         //El menos 0x30 es para pasar de ASCII a digito binario
-        aux = (data[i*3 + 0] - 0x30)*10 + (data[i*3 + 1] - 0x30)*1;
+        aux = (d[i*3 + 0] - 0x30)*10 + (d[i*3 + 1] - 0x30)*1;
         insert_n_bitsQR(bs, aux, 7);
     }
 
@@ -1117,7 +1117,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
     {
         unsigned int aux;
         //El menos 0x30 es para pasar de ASCII a digito binario
-        aux = (data[i*3 + 0] - 0x30)*1;
+        aux = (d[i*3 + 0] - 0x30)*1;
         insert_n_bitsQR(bs, aux, 4);
     }
 
@@ -1282,6 +1282,8 @@ uchar getTipoMsg(char* datos, uint longitud)
 
     for (i = 0; (i < longitud) && (bNumerica | bAlfaNumerica); i++)
     {
+        if (datos[i] == IA_C  || datos[i] == IA_F || datos[i] == CAMBIO_A || datos[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
+	      continue;
         if (datos[i] < 0x30 || datos[i] > 0x39)
             bNumerica = 0;
         
