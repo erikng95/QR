@@ -1313,6 +1313,7 @@ uchar getTipoMsg(char* datos, uint longitud)
     {
         if (datos[i] == IA_C  || datos[i] == IA_F || datos[i] == CAMBIO_A || datos[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
 	      continue;
+	      
         if (datos[i] < 0x30 || datos[i] > 0x39)
             bNumerica = 0;
         
