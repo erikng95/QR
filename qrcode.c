@@ -337,7 +337,7 @@ static	void 	aplica_mascara_111					(struct BitmapQR *bm, struct BitmapQR *colis
 static	void 	QRcoloca_format_info				(struct QRcode *qrcode);
 static	uchar 	bitAtByte							(uchar dato, uchar pos);
 static	uchar 	getPixelAt							(int x, int y, struct BitmapQR *bm);
-static  void    quitarCterEspecial                  (char *data, uint data_length);
+
 //***********************************************************************/
 // VARIABLES LOCALES                                                    */
 //***********************************************************************/
@@ -1095,7 +1095,16 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
         char_count_indicator = 14;
 
     insert_n_bitsQR(bs, 0x1, 4);
-    QuitarCterEspecial(data, data_length);
+    for(i=0;i<data_length;i++)
+    {
+    if (data[i] == IA_C  || data[i] == IA_F || data[i] == CAMBIO_A || data[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
+       {
+	   cter_ctrl++;
+	   continue;
+	   }
+    d[j] = data[i];
+    j++;
+    }
     data_length -= cter_ctrl;
     insert_n_bitsQR(bs, data_length, char_count_indicator);
 
@@ -2245,21 +2254,6 @@ uchar cal_qr(void)
         return (((qrcode->version - 1) * 4) + 21);
     else
         return 0;
-}
-
-void quitarCterEspecial(char *data, uint data_length)
-{
-    int i,j=0;
-    for(i=0;i<data_length;i++)
-    {
-    if (data[i] == IA_C  || data[i] == IA_F || data[i] == CAMBIO_A || data[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
-       {
-	   cter_ctrl++;
-	   continue;
-	   }
-    d[j] = data[i];
-    j++;
-    }
 }
 
 #endif 
