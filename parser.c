@@ -71,7 +71,7 @@ static	uchar	num128;				/* Numero de caracteres del EAN-128 */
 static	uchar	ord128;				/* Numero de orden EAN-128 */
 static	uchar	tipcod128;			/* Tipo de codigo */
 static	long	sum128;				/* Suma EAN-128 */
-static	uchar	flg128;				/* TRUE si componer 2§ digito */
+static	uchar	flg128;				/* TRUE si componer 2Â§ digito */
 static	uchar 	inicio_letra;
 static	uchar	flag_inicio_ean;
 static	uchar	code128pr;
@@ -120,13 +120,12 @@ static	uchar flg_nonum;
   #endif
 
   #if QR_CODE
-static  void    dup_qr						(uchar fil, uchar t, uchar n);
+static  void    dup_qr						(uchar fil, uchar t, uchar n, uchar *bm);
 static  uchar 	dib_qr						(void);
-uchar   *obtenBufParser						(void);
-uint    obtenNumDig						    (void);
-extern  struct QRcode qrcod;
   #endif
 
+struct	COORD_XY	coord_xy[100];
+uchar	tipo_campo;
 
 //**************************************************************************************
 // TABLAS                                                                              *
@@ -177,9 +176,9 @@ const	ptr_fun	tbl_comandos_parser[MAX_COMANDOS_PARSER] = {
 	com_X,       /* 'Xnnn' */         	/* Anchura del logo           */
 	com_Y,       /* 'Ynnn' */         	/* Longitud del logo          */
 	com_Z,       /* 'Zmddd....' */    	/* Datos del logo             */
-	comnad,      /* '[' */            	/*                            */
+	com_ac,      /* '[xcc' */           /* Campo variable             */
 	comnad,      /* '\' */            	/*                            */
-	com_ct,      /* '^]xxx,yyyy'*/    	/* Tama¤o de pagina.          */
+	com_ct,      /* '^]xxx,yyyy'*/    	/* TamaÂ¤o de pagina.          */
 	comnad,      /* '^' */            	/*                            */
 	comnad,      /* '_' */            	/*                            */
 	com_cp,      /* '^`t'*/           	/* Tipo de papel              */
@@ -553,7 +552,7 @@ int recrib;
 
 //**************************************************************************************
 // COM_ME                               18-Nov-14                                      *
-// Tama¤o de cabeza termica.                                                           *
+// TamaÂ¤o de cabeza termica.                                                           *
 //**************************************************************************************
 void com_me(void)
 {
@@ -743,6 +742,7 @@ void com_E(void)
    flag_generar_cter_control = TRUE;   	/* Caracter de control */
    if (get_ctr_parser() == 'D')
      flag_generar_cter_control = FALSE;
+   tipo_campo = 2;
 }
 
 //**************************************************************************************
@@ -946,9 +946,71 @@ void 	com_Z(void)
 {
 }
 
+/************************************************************************/
+/* COM_AC                               20-May-19                       */
+/* ^[xcc. Coordenadas campos variables.                                 */
+/************************************************************************/
+void com_ac(void)
+{
+   uchar c,n;
+
+   c = get_ctr_parser();
+   if (c == 0x1b)
+     {
+     flgesc = TRUE;
+     return;
+     }
+   n = rd_char_buffer_parser();
+   if (n > 99)
+     return;
+   if (c == '0')						/* Coger los datos */
+     {
+     if (tipo_campo == 0)
+       return;
+     coord_xy[n].def = tipo_campo;
+     coord_xy[n].x   = h_pos;
+     coord_xy[n].y   = v_pos;
+     coord_xy[n].r   = rotacion;
+     if (tipo_campo == 1)				/* Font */
+       {
+       coord_xy[n].let  = font;
+       coord_xy[n].xmag = xmag;
+       coord_xy[n].ymag = ymag;
+       coord_xy[n].ena  = flg_negritas;
+       }
+     else								/* EAN */
+       {
+       coord_xy[n].let = alt;
+       coord_xy[n].ena = flag_generar_cter_control;
+       }
+     tipo_campo = 0;
+     return;
+     }
+   if (coord_xy[n].def != 0)			/* Poner los datos */
+     {
+     h_pos = coord_xy[n].x;
+     v_pos = coord_xy[n].y;
+     rotacion = coord_xy[n].r;
+     horpos = h_pos;
+     verpos = v_pos;
+     if (coord_xy[n].def == 1)			/* Font */
+       {
+       font = coord_xy[n].let;
+       xmag = coord_xy[n].xmag;
+       ymag = coord_xy[n].ymag;
+       flg_negritas = coord_xy[n].ena & 0x01;
+       }
+     else								/* EAN */
+       {
+       alt = coord_xy[n].let;
+       flag_generar_cter_control = coord_xy[n].ena;
+       }
+     }
+}
+
 //**************************************************************************************
 // COM_CT                               18-Nov-14                                      *
-// ^]xxx,yyyy. Tama¤o pagina.                                                          *
+// ^]xxx,yyyy. TamaÂ¤o pagina.                                                          *
 //**************************************************************************************
 void com_ct(void)
 {
@@ -1050,8 +1112,20 @@ int dist_salida;
 //**************************************************************************************
 void com_c(void)
 {
+   uchar i;
    clrima();                            /* Borrar RAM imagen */
    size_y = 0;
+   for (i=0;i<100;i++)					/* Poner a 0 la estructura de las coordenadas */
+     {
+     coord_xy[i].def = FALSE;
+     coord_xy[i].x = 0;
+     coord_xy[i].y = 0;
+     coord_xy[i].r = 0;
+     coord_xy[i].let = 0;
+     coord_xy[i].xmag = 0;
+     coord_xy[i].ymag = 0;
+     coord_xy[i].ena = FALSE;
+     }
 }
 
 //**************************************************************************************
@@ -1278,7 +1352,7 @@ void com_w(void)
 /************************************************************************/
 /* COM_X                                 4-Feb-2002                     */
 /* ^xNNE. Logo.                                                         */
-/*             N: Nº de logo  (p.e. '01')                               */
+/*             N: NÂº de logo  (p.e. '01')                               */
 /*             E: Efecto especial                                       */
 /*	                 '0': no imprime                                    */
 /*	                 '1': normal                                        */
@@ -1414,8 +1488,8 @@ void 	com_y(void)
 //         SET_BNK_ROM(BNKROM_0);
          imaean((uchar)tbl128[sum128],3);
          num128++;
-         imaean(0xc7,8);                /* 1¦ parte de parada */
-         imaean(0x58,8);                /* 2¦ parte de parada */
+         imaean(0xc7,8);                /* 1Â¦ parte de parada */
+         imaean(0x58,8);                /* 2Â¦ parte de parada */
          if (rotacion == 2)
            indstr++;
          num128++;
@@ -1645,6 +1719,7 @@ void rd_tipo_letra(uchar tl)
    c = get_ctr_parser();                /* Leer Y mag */
    c -= '0';
    ymag = c;
+   tipo_campo = 1;
 }
 
 //**************************************************************************************
@@ -1653,7 +1728,7 @@ void rd_tipo_letra(uchar tl)
 //**************************************************************************************
 void tratar_cr(void)
 {
-   if (rotacion == 0  ||  rotacion == 2)/* Rot 0§ o 180§ */
+   if (rotacion == 0  ||  rotacion == 2)/* Rot 0Â§ o 180Â§ */
      h_pos = horpos;
    else
      v_pos = verpos;
@@ -1676,19 +1751,19 @@ int n;
         
 		switch (rotacion)
 		{	
-		case 0:                            /* rotacion = 0, 0§ */
+		case 0:                            /* rotacion = 0, 0Â§ */
 			verpos += n;
 			v_pos = verpos;
 			break;
-		case 1:                            /* rotacion = 1, 90§ */
+		case 1:                            /* rotacion = 1, 90Â§ */
 			horpos -= n;
 			h_pos = horpos;
 			break;
-		case 2:                            /* rotacion = 2,180§ */
+		case 2:                            /* rotacion = 2,180Â§ */
 			verpos -= n;
 			v_pos = verpos;
 			break;
-		case 3:                            /* rotacion = 3,270§ */
+		case 3:                            /* rotacion = 3,270Â§ */
 			horpos += n;
 			h_pos = horpos;
 			break;
@@ -1703,7 +1778,7 @@ int n;
 		
 		switch (rotacion)
 		{	
-		case 0:                            /* rotacion = 0, 0§ */
+		case 0:                            /* rotacion = 0, 0Â§ */
             if (c == TRUE)
 			  v_pos += n;
             else
@@ -1712,7 +1787,7 @@ int n;
 			  v_pos = verpos;
               }
 			break;
-		case 1:                            /* rotacion = 1, 90§ */
+		case 1:                            /* rotacion = 1, 90Â§ */
             if (c == TRUE)
 			  h_pos -= n;
             else
@@ -1721,7 +1796,7 @@ int n;
 			  h_pos = horpos;
               }
 			break;
-		case 2:                            /* rotacion = 2,180§ */
+		case 2:                            /* rotacion = 2,180Â§ */
             if (c == TRUE)
 			  v_pos -= n;
             else
@@ -1730,7 +1805,7 @@ int n;
 			  v_pos = verpos;
               }
 			break;
-		case 3:                            /* rotacion = 3,270§ */
+		case 3:                            /* rotacion = 3,270Â§ */
             if (c == TRUE)
 			  h_pos += n;
             else
@@ -1819,7 +1894,7 @@ uchar calcula_check_codigo_barras(uchar e)
        num_digitos_codigo_barras = i;
        if (flag_generar_cter_control == TRUE)
          num_digitos_codigo_barras++;
-       if ((num_digitos_codigo_barras % 2) != 0)           /* Numero impar, a¤adir un cero */
+       if ((num_digitos_codigo_barras % 2) != 0)           /* Numero impar, aÂ¤adir un cero */
          {
          for (j=num_digitos_codigo_barras;j!=0;j--)
            buf_auxiliar_parser[j] = buf_auxiliar_parser[j-1];
@@ -2606,9 +2681,9 @@ uchar cal_datamatrix(void)
            }
          break;
        default:
-         if (c > 0x80)					/* Añadir caracter Upper Shift */
+         if (c > 0x80)					/* AÃ±adir caracter Upper Shift */
            {
-           *ptr++ = 235;				/* Añadir el caracter */
+           *ptr++ = 235;				/* AÃ±adir el caracter */
            n++;
            c = cnv_datamatrix(c);		/* Convertir el caracter de codepage de dos al de windows y en lower */
            }
@@ -2620,9 +2695,9 @@ uchar cal_datamatrix(void)
        d = 232;							/* Codificar el FNC1 */
      else
        {
-       if (c > 0x80)					/* Añadir caracter Upper Shift */
+       if (c > 0x80)					/* AÃ±adir caracter Upper Shift */
          {
-         *ptr++ = 235;					/* Añadir el caracter */
+         *ptr++ = 235;					/* AÃ±adir el caracter */
          n++;
          c = cnv_datamatrix(c);			/* Convertir el caracter de codepage de dos al de windows y en lower */
          }
@@ -3187,7 +3262,7 @@ void wrirss(void)
    if ( densidad_ean > 2)
      densidad_ean = 0;
    dorss14(0,46,0x01,0,FALSE);
-   dibean(0,RSS_14);					/* repite la primera linea hasta la altura del código programada */
+   dibean(0,RSS_14);					/* repite la primera linea hasta la altura del cÃ³digo programada */
    h_pos = h;							/* Recuperar h_pos */
 }
 
@@ -3405,10 +3480,10 @@ void wrirss_apilado(void)
    indstr_aux3 = indstr;				/* guarda indice de SEPARADOR */
 /**** AQUI EMPIEZA EL ENVIO AL PARSER DE LAS DIFERENTES PARTES DEL RSS-14 APILADO ********/
    alt_aux = alt;						/* guardamos la altura programada para hacer la ...... */
-   alt = alt - 15;						/* diferencia de altura del TRUNCADO al APILADO (1ª parte) */
+   alt = alt - 15;						/* diferencia de altura del TRUNCADO al APILADO (1Âª parte) */
    indstr = indstr_aux1;				/* recupera indice de la PRIMERA PARTE */
    indstr++;
-   dibean(1,RSS_14);					/* repite la primera linea DE LA PRIMERA PARTE hasta la altura del código programada */
+   dibean(1,RSS_14);					/* repite la primera linea DE LA PRIMERA PARTE hasta la altura del cÃ³digo programada */
 /* aqui falta todo lo relacionado con las otras rotaciones */
    if (rotacion == 0)
 	 v_pos += (alt + 1);
@@ -3426,10 +3501,10 @@ void wrirss_apilado(void)
 	 v_pos -= (alt + 1);
 /***********************************************************/
    alt = alt_aux;
-   alt = alt - 11;						/* diferencia de altura del TRUNCADO al APILADO (2ª parte) */
+   alt = alt - 11;						/* diferencia de altura del TRUNCADO al APILADO (2Âª parte) */
    indstr = indstr_aux2;				/* recupera indice de la SEGUNDA PARTE */
    indstr++;
-   dibean(3,RSS_14);					/* repite la primera linea DE LA SEGUNDA PARTE hasta la altura del código programada */
+   dibean(3,RSS_14);					/* repite la primera linea DE LA SEGUNDA PARTE hasta la altura del cÃ³digo programada */
    alt = alt_aux;
    h_pos = h;							/* Recuperar h_pos */
 }
@@ -3459,7 +3534,7 @@ void wrirss_apilado_omni(void)
    indstr_aux2 = indstr;				/* guarda indice de la SEGUNDA PARTE */
    indstr = indstr_aux1;				/* recupera indice de la PRIMERA PARTE */
    indstr++;
-   dibean(1,RSS_14);					/* repite la primera linea DE LA PRIMERA PARTE hasta la altura del código programada */
+   dibean(1,RSS_14);					/* repite la primera linea DE LA PRIMERA PARTE hasta la altura del cÃ³digo programada */
 /******************* Formacion de la PRIMERA PARTE DEL SEPARADOR CENTRAL ***************************************/
    modulo = 0;
    ant_dato = 0;						/* dato anterior en la linea de separacion */
@@ -3502,7 +3577,7 @@ void wrirss_apilado_omni(void)
 /* aqui se pinta LA PRIMERA PARTE DEL SEPARADOR CENTRAL */
    alt_aux = alt;						/* guardamos la altura programada  */
    alt = 4;
-   dibean(2,RSS_14);					/* repite la primera linea del SEPARADOR hasta la altura del código programada */
+   dibean(2,RSS_14);					/* repite la primera linea del SEPARADOR hasta la altura del cÃ³digo programada */
 /******************* Formacion de la SEGUNDA PARTE DEL SEPARADOR CENTRAL ***************************************/
    for (i=0;i<BYTLINM;i++)
      sepstr1[i] = 0x00;
@@ -3528,7 +3603,7 @@ void wrirss_apilado_omni(void)
 	 v_pos -= alt;
      h_pos -= 6;
      }
-   dibean(2,RSS_14);					/* repite la primera linea del SEPARADOR hasta la altura del código programada */
+   dibean(2,RSS_14);					/* repite la primera linea del SEPARADOR hasta la altura del cÃ³digo programada */
 /******************* Formacion de la TERCERA PARTE DEL SEPARADOR CENTRAL ***************************************/
    for (i=0;i<BYTLINM;i++)
      sepstr1[i] = 0x00;
@@ -3571,7 +3646,7 @@ void wrirss_apilado_omni(void)
 	 v_pos -= alt;
      h_pos -= 6;
      }
-   dibean(2,RSS_14);					/* repite la primera linea del SEPARADOR hasta la altura del código programada */
+   dibean(2,RSS_14);					/* repite la primera linea del SEPARADOR hasta la altura del cÃ³digo programada */
 /* aqui se pinta LA SEGUNDA PARTE DEL RSS-14 APILADO */
    if (rotacion == 0)
      {
@@ -3589,7 +3664,7 @@ void wrirss_apilado_omni(void)
    alt = alt_aux;						/* recuperamos la altura programada  */
    indstr = indstr_aux2;				/* recupera indice de la SEGUNDA PARTE */
    indstr++;
-   dibean(3,RSS_14);					/* repite la primera linea DE LA SEGUNDA PARTE hasta la altura del código programada */
+   dibean(3,RSS_14);					/* repite la primera linea DE LA SEGUNDA PARTE hasta la altura del cÃ³digo programada */
    h_pos = h;							/* Recuperar h_pos */
 }
 
@@ -3878,7 +3953,7 @@ int alphanumeric_encode(uchar *estado,char *s)
    if (strlen(s) == 0) 					/* Ya consumi el ultimo caracter, relleno con los bits de padding */
      {
      resto = ind_bitstr % 12;
-     if (resto != 0) 					/* Si no hay un numero exacto de caracteres, calculo cuanto hay que añadir */
+     if (resto != 0) 					/* Si no hay un numero exacto de caracteres, calculo cuanto hay que aÃ±adir */
        resto = 12 - resto;
      if (stacked == 1)
        {								/* Calculo cuantos caracteres va a haber */
@@ -3887,7 +3962,7 @@ int alphanumeric_encode(uchar *estado,char *s)
        extrapadding = numero_simbolos % row_symbols;  
        }
      if (extrapadding == 1)
-       resto += 12;  					/* Añado 12 bits más de padding */
+       resto += 12;  					/* AÃ±ado 12 bits mÃ¡s de padding */
      for(i=0;i<resto;i++)
        {
        ins_bitstr(padding_bits,1);
@@ -3916,7 +3991,7 @@ int alphanumeric_encode(uchar *estado,char *s)
      *estado = 0;
      procesados = 1; 					/* Un caracter procesado */
      }
-   else  								/* Es un caracter del juego alfanumérico */
+   else  								/* Es un caracter del juego alfanumÃ©rico */
      {
      if (s[0] >= '0'  &&  s[0] <= '9') 	/* Digito 0-9 */
        {
@@ -3962,7 +4037,7 @@ void calcula_databar_expanded(void)
    uint fila_finders; 					/* Fila de la tabla tbl_finders_RSS_expanded que se va a usar */
    uint next_finder; 					/* Indice del finder que toca utilizar */
    uint indice_tabla_pesos;  			/* Indice auxiliar para acceder a la tabla de pesos */
-   uint indice_simbolo; 				/* Indice del simbolo que se está procesando */
+   uint indice_simbolo; 				/* Indice del simbolo que se estÃ¡ procesando */
    uint indice_modulo; 					/* Indice que lleva la cuenta del modulo del que toca poner el ancho */
 
    if (ind_bitstr % 12 != 0)
@@ -3985,9 +4060,9 @@ void calcula_databar_expanded(void)
    for (i=0;i<num_data_elements;i++)
      {									/* Calcular elemento */
      anchos_valor_expanded(ext_bitstr(),(char *)aux_anchos);
-     indice_tabla_pesos = 2*(tbl_finders_RSS_expanded[fila_finders][(indice_simbolo-1)/2]); /* Me da el finder más cercano */
+     indice_tabla_pesos = 2*(tbl_finders_RSS_expanded[fila_finders][(indice_simbolo-1)/2]); /* Me da el finder mÃ¡s cercano */
      if (indice_simbolo % 2 == 0)
-       indice_tabla_pesos++;			/* Si el simbolo es par, está a la derecha del finder */
+       indice_tabla_pesos++;			/* Si el simbolo es par, estÃ¡ a la derecha del finder */
      p = tbl_weights_RSS_expanded[indice_tabla_pesos];
      for (j=0;j<8;j++)
        {
@@ -4004,7 +4079,7 @@ void calcula_databar_expanded(void)
        for (j=0;j<=7;j++)
          ingr[indice_modulo++] = aux_anchos[j];
        }
-     if (indice_simbolo % 2 != 0) 		/* Si es un simbolo impar, a continuación va un finder */
+     if (indice_simbolo % 2 != 0) 		/* Si es un simbolo impar, a continuaciÃ³n va un finder */
        {
        for (j=0;j<5;j++)
          ingr[indice_modulo++] = tbl_anchos_finders_RSS_expanded[tbl_finders_RSS_expanded[fila_finders][next_finder]][j];
@@ -4032,7 +4107,7 @@ void anchos_valor_expanded(uint valor,char *anchos)
    uint limite,divisor,impar,par,modulos, anch_max;
    char anchos_par[4],anchos_impar[4];
   
-   for (i=1;i<=5;i++)					/* Busca en la tabla en que grupo está el valor */
+   for (i=1;i<=5;i++)					/* Busca en la tabla en que grupo estÃ¡ el valor */
      {
      limite = tbl_data_RSS_expanded[5-i][0];
      divisor = tbl_data_RSS_expanded[5-i][5];
@@ -4078,7 +4153,7 @@ void calcula_databar_expanded_stacked(void)
      num_rows = (1 + ind_bitstr/12) / row_symbols;  /* El 1 + es por el check char */
      last_row_symbols = (1 + (ind_bitstr)/12) % row_symbols;	/* El 1 + es por el check char */
      }
-   if (last_row_symbols == 0) 			/* Si el resto de la operacion anterior es 0, la ultima fila está completa */
+   if (last_row_symbols == 0) 			/* Si el resto de la operacion anterior es 0, la ultima fila estÃ¡ completa */
      last_row_symbols = row_symbols;
    calcula_databar_expanded();
    calcula_separadores_bruto();
@@ -4116,7 +4191,7 @@ void calcula_databar_expanded_stacked(void)
        else
          j += hueco_barra(j);
        }
-     /* Ya están añadidos los puntos iniciales. Ahora se copian los bits correspondientes al codigo de barras */
+     /* Ya estÃ¡n aÃ±adidos los puntos iniciales. Ahora se copian los bits correspondientes al codigo de barras */
      limite = (i == (num_rows - 1)) ? bits_in_last_row : bits_in_row; 	/* Cuantos bits hay que copiar */
      if (((i+1) % 2 == 0)  &&  (filas_pares_reversed == 1)  &&  (i == num_rows - 1)  &&  (last_row_symbols % 4 != 0))
      /* Caso especial: ultima fila con numero impar de finders: no se le da la vuelta y se mete un hueco al inicio */
@@ -4145,12 +4220,12 @@ void calcula_databar_expanded_stacked(void)
          wr_separadores_stacked(j++,rd_separadores(k++));
          }
        }
-     /* Ahora se añaden el hueco y barra, o barra y hueco finales */
+     /* Ahora se aÃ±aden el hueco y barra, o barra y hueco finales */
      if (((i+1) % 2 == 0)  &&  (filas_pares_reversed == 1)  &&  (i == num_rows - 1)  &&  (last_row_symbols % 4 != 0))
      /* Caso especial: ultima fila con numero impar de finders: no se le da la vuelta y se mete un hueco al inicio */
        {
        j += barra_hueco(j);
-       bits_in_last_row++; 				/* En este caso la ultima fila ha crecido en un bit más */
+       bits_in_last_row++; 				/* En este caso la ultima fila ha crecido en un bit mÃ¡s */
        }
      else if ((i+1) % 2 == 0 ) 			/* Si es fila par */
        {
@@ -4167,8 +4242,8 @@ void calcula_databar_expanded_stacked(void)
          j += barra_hueco(j);
       }
      }
-   bits_in_row += 4; 					/* Le añado 4 porque ya tiene los huecos y barras inicial y final cada fila */
-   bits_in_last_row += 4; 				/* Le añado 4 porque ya tiene los huecos y barras inicial y final cada fila */
+   bits_in_row += 4; 					/* Le aÃ±ado 4 porque ya tiene los huecos y barras inicial y final cada fila */
+   bits_in_last_row += 4; 				/* Le aÃ±ado 4 porque ya tiene los huecos y barras inicial y final cada fila */
    /* Se ponen los 4 primeros y 4 ultimos bits de cada separador a 0 */
    for (j=0;j<num_rows;j++)
      {									/* 4 primeros */
@@ -4429,7 +4504,7 @@ int iso_iec_encode(uchar *estado,char *s)
    if (strlen(s) == 0) 					/* Ya consumi el ultimo caracter, relleno con los bits de padding */
      {
      resto = ind_bitstr % 12;
-     if (resto != 0) 					/* Si no hay un numero exacto de caracteres, calculo cuanto hay que añadir */
+     if (resto != 0) 					/* Si no hay un numero exacto de caracteres, calculo cuanto hay que aÃ±adir */
        resto = 12 - resto;
      if (stacked == 1)
        {
@@ -4438,7 +4513,7 @@ int iso_iec_encode(uchar *estado,char *s)
        extrapadding = numero_simbolos % row_symbols;
        }
      if (extrapadding == 1)
-       resto += 12;  					/* Añado 12 bits más de padding */
+       resto += 12;  					/* AÃ±ado 12 bits mÃ¡s de padding */
      for (i=0;i<resto;i++)
        {
        ins_bitstr(padding_bits,1);
@@ -4607,7 +4682,7 @@ int numeric_encode(uchar *estado, char *s)
    long padding_bits;
 
    procesados = 0;
-   padding_bits = 0x04210840L; 			/* bits para rellenar cuando no hay mas caracteres. Están en orden inverso */
+   padding_bits = 0x04210840L; 			/* bits para rellenar cuando no hay mas caracteres. EstÃ¡n en orden inverso */
    length_pData = strlen(s);
    if (length_pData >= 2  &&  			/* Tiene que ser digito-digito, digito-FNC1 o FNC1-digito */
       ((s[0] >= '0'  &&  s[0] <= '9')  ||  s[0] == FNC1)  &&  
@@ -4627,7 +4702,7 @@ int numeric_encode(uchar *estado, char *s)
      procesados = 2;					/* Dos caracteres procesados */
      *estado = 0;
      }
-   else if (length_pData >= 2) 			/* Quedan más de dos caracteres pero no se pueden codificar en numerico */
+   else if (length_pData >= 2) 			/* Quedan mÃ¡s de dos caracteres pero no se pueden codificar en numerico */
      {
      ins_bitstr(0x00,4);				/* Inserto el Alphanumeric Latch y paso al estado 1 */
      *estado = 1;
@@ -4658,18 +4733,18 @@ int numeric_encode(uchar *estado, char *s)
    else if (length_pData == 0) 			/* No quedan caracteres */
      {
      resto = ind_bitstr % 12;
-     if (resto != 0) 					/* Si no hay un numero exacto de caracteres, calculo cuanto hay que añadir */
+     if (resto != 0) 					/* Si no hay un numero exacto de caracteres, calculo cuanto hay que aÃ±adir */
        resto = 12 - resto;
      if (stacked == 1)					/* Relleno con los bits de padding */
        {
        /* Calculo cuantos caracteres va a haber */
-       numero_simbolos = 1 + ind_bitstr / 12; 	/*  El 1 + es por el check char, que no está en el bistring */
-       numero_simbolos = numero_simbolos + (resto == 0 ? 0 : 1); 	/* Si había resto, habrá un caracter más */
-       /* Calculo si es necesario padding extra. Si en la ultima linea solo quedaría un simbolo, es necesario */
+       numero_simbolos = 1 + ind_bitstr / 12; 	/*  El 1 + es por el check char, que no estÃ¡ en el bistring */
+       numero_simbolos = numero_simbolos + (resto == 0 ? 0 : 1); 	/* Si habÃ­a resto, habrÃ¡ un caracter mÃ¡s */
+       /* Calculo si es necesario padding extra. Si en la ultima linea solo quedarÃ­a un simbolo, es necesario */
        extrapadding = numero_simbolos % row_symbols;  	/* Si el resto es 1, quiere decir que en modo stacked la ultima fila tiene solo un simbolo, y tiene que tener al menos 2 */
        }
      if (extrapadding == 1)
-       resto += 12;  					/* Añado 12 bits más de padding */
+       resto += 12;  					/* AÃ±ado 12 bits mÃ¡s de padding */
      for (i=0;i<resto;i++)
        {
        ins_bitstr(padding_bits,1);
@@ -5195,22 +5270,22 @@ static	void int128(uchar n)
 		/* LC */
 		  if (buf_auxiliar_parser[i] < ' ')
 			continue;
-          if (flg_datamatrix == TRUE)
+          if (flg_datamatrix == TRUE || flg_qr == TRUE)
             {
 		  if (CodepageImpresion == CODEPAGE_850)
 		    {
             switch (buf_auxiliar_parser[i])
               {
-              case 0xd0:				/* "Ç" */
+              case 0xd0:				/* "Ã‡" */
 			    buf_auxiliar_parser[i] = 0x1c;
                 break;
-              case 0xd1:				/* "ç" */
+              case 0xd1:				/* "Ã§" */
 			    buf_auxiliar_parser[i] = 0x1d;
                 break;
-              case 0xd2:				/* "Ñ" */
+              case 0xd2:				/* "Ã‘" */
 			    buf_auxiliar_parser[i] = 0x1e;
                 break;
-              case 0xd3:				/* "ñ" */
+              case 0xd3:				/* "Ã±" */
 			    buf_auxiliar_parser[i] = 0x1f;
                 break;
                }
@@ -5301,7 +5376,7 @@ static	void wri128(uchar c)
 
 	if (tipcod128 == 2)                     /* Tipo C */
 		{
-		if (flg128 == TRUE)                /* Componer 2§ digito */
+		if (flg128 == TRUE)                /* Componer 2Â§ digito */
 			{
 			flg128 = FALSE;
 			ctr += c & 0x0f;                 /* Componer digito */
@@ -5412,7 +5487,7 @@ int rd_offset(void)
 // DUP_QR                                            29-Dic-17          */
 // Pasar de la imagen al string del qr.                                 */
 //***********************************************************************/
-void dup_qr(uchar fil, uchar t, uchar n)
+void dup_qr(uchar fil, uchar t, uchar n, uchar *bm)
 {
    uchar a,i,c,m,j,k,d,mj,jj;
    uchar sizeRowBytes;
@@ -5422,7 +5497,7 @@ void dup_qr(uchar fil, uchar t, uchar n)
    memset(imastr,0x00,200);
 
    a = t + 3;
-   ptr = (char *)qrcod.codigo.m;
+   ptr = (char *)bm;
    ptr += fil * sizeRowBytes;
    jj = 0;
    mj = 0x80;
@@ -5484,11 +5559,11 @@ uchar 	dib_qr(void)
     
     for (i = 0; i<n; i++)
     {
-        dup_qr(i, tam, n);
+        dup_qr(i, tam, n, &qrcod->codigo.m[0]);
         lin_datamatrix(tam);				/* Dibujar cada linea del qr, se usa la misma funcion que el datamatrix */
     }
 
-    if (n > 25)     /* Si la version es > 2 truncamos para que no imprima la línea de interpretacion puesto que será muy larga */
+    if (n > 25)     /* Si la version es > 2 truncamos para que no imprima la lÃ­nea de interpretacion puesto que serÃ¡ muy larga */
         n = 0;
     return(n);
 }
@@ -5508,7 +5583,7 @@ uchar 	*obtenBufParser (void)
 //**************************************** ******************************/
 uint 	obtenNumDig (void)
 {
-	return (num_digitos_codigo_barras - 1); /* el -1 a la longitud es por el caracter FNC1 que hay al comienzo */
+	return (num_digitos_codigo_barras - (1)); /* el -1 a la longitud es por el caracter FNC1 que hay al comienzo */
 }
 
 #endif

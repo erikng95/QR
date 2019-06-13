@@ -45,7 +45,6 @@ void 	com_V							(void);
 void 	com_X							(void);
 void 	com_Y							(void);
 void 	com_Z							(void);
-void 	com_ac							(void);
 void 	com_ct							(void);
 void 	com_cp							(void);
 void 	com_a							(void);
@@ -211,14 +210,3 @@ uchar 	rd_flg_negritas					(void);
 #define IA_C						28						/* Parentesis de los identificadores */
 #define IA_F						29
 
-struct COORD_XY
-{
-   uchar	def;
-   int 		x;
-   int		y;
-   uchar	r;
-   int 		let;
-   uchar	xmag;
-   uchar	ymag;
-   uchar	ena;
-};

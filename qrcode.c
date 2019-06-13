@@ -12,24 +12,18 @@
 #include "parser.h"
 #include "imagen.h"
 #include "qrcode.h"
-#include "tablas.h"
-#include "SrvImpresion.h"
-#include "SrvFonts.h"
-#include "SrvMemoriaDinamica.h"
-#include ".\FontsFlash\FontsFijos.h"
 #include "Comms\ProtocoloDebug232.h"
 #include "Assert.h"
-#include "SrvFonts.h"
-#include "SrvLogos.h"
   #if CORR_CAMBIO_FTO
 #include "RegistrosImpresion.h"
 #include ".\DrvHw\DrvFPGA.h"
   #endif
   
 #if QR_CODE
+
 /* Numero de data codeword segun version y nivel de correccion de errores
    Tablas 7 a 11 del estandar */
-static const int tbl_codewords_version[25][2] = {
+static const int tbl_codewords_version[40][2] = {
     { 19,   16 },
     { 34,   28 },
     { 55,   44 },
@@ -54,28 +48,49 @@ static const int tbl_codewords_version[25][2] = {
     { 1006, 782 },
     { 1094, 860 },
     { 1174, 914 },
-    { 1276, 1000 }
+    { 1276, 1000 },
+    { 1370, 1062 },
+    { 1468, 1128 },
+    { 1531, 1193 },
+    { 1631, 1267 },
+    { 1735, 1373 },
+    { 1843, 1455 },
+    { 1955, 1541 },
+    { 2071, 1631 },
+    { 2191, 1725 },
+    { 2306, 1812 },
+    { 2434, 1914 },
+    { 2566, 1992 },
+    { 2702, 2102 },
+    { 2812, 2216 },
+    { 2956, 2334 }
                                 };
-/* capacidades: numerico, alfanumerico, byte
-   paginas 28 a 32 del documento */
-static const uint tabla_capacidades_L[25][3] =
+//capacidades: numerico, alfanumerico, byte
+//paginas 28 a 32 del documento
+static const unsigned int tabla_capacidades_L[40][3] =
 {
-    { 41, 25, 17 },{ 77, 47, 32 },{ 127, 77, 53 },{ 187, 114, 78 },{ 255, 154, 106 },
-    { 322, 195, 134 },{ 370, 224, 154 },{ 461, 279, 192 },{ 552, 335, 230 },{ 652, 395, 271 },
-    { 772, 468, 321 },{ 883, 535, 367 },{ 1022, 619, 425 },{ 1101, 667, 458 },{ 1250, 758, 520 },
-    { 1408, 854, 586 },{ 1548, 938, 644 },{ 1725, 1046, 718 },{ 1903, 1153, 792 },{ 2061, 1249, 858 },
-    { 2232, 1352, 929 },{ 2409, 1460, 1003 },{ 2620, 1588, 1091 },{ 2812, 1704, 1171 },{ 3057, 1853, 1273 }
+    {41, 25, 17}, {77, 47, 32}, {127, 77, 53}, {187, 114, 78}, {255, 154, 106},
+    {322, 195, 134}, {370, 224, 154}, {461, 279, 192}, {552, 335, 230}, {652, 395, 271},
+    {772, 468, 321}, {883, 535, 367}, {1022, 619, 425}, {1101, 667, 458}, {1250, 758, 520},
+    {1408, 854, 586}, {1548, 938, 644}, {1725, 1046, 718}, {1903, 1153, 792}, {2061, 1249, 858},
+    {2232, 1352, 929}, {2409, 1460, 1003}, {2620, 1588, 1091}, {2812, 1704, 1171}, {3057, 1853, 1273},
+    {3283, 1990, 1367}, {3517, 2132, 1465}, {3669, 2223, 1528}, {3909, 2369, 1628}, {4158, 2520, 1732},
+    {4417, 2677, 1840}, {4686, 2840, 1952}, {4965, 3009, 2068}, {5253, 3183, 2188}, {5529, 3351, 2303},
+    {5836, 3537, 2431}, {6153, 3729, 2563}, {6479, 3927, 2699}, {6743, 4087, 2809}, {7089, 4296, 2953}
 };
 
-/* capacidades: numerico, alfanumerico, byte
-   paginas 28 a 32 del documento */
-static const uint tabla_capacidades_M[25][3] =
+//capacidades: numerico, alfanumerico, byte
+//paginas 28 a 32 del documento
+static const unsigned int tabla_capacidades_M[40][3] =
 {
     {34, 20, 14}, {63, 38, 26}, {101, 61, 42}, {149, 90, 62}, {202, 122, 84},
     {255, 154, 106}, {293, 178, 122}, {365, 221, 152},  {432, 262, 180}, {513, 311, 213},
     {604, 366, 251}, {691, 419, 287}, {796, 483, 331}, {871, 528, 362}, {991, 600, 412},
-    {1082, 656, 450}, {1212, 734, 504}, {1346, 816, 560}, {1500, 909, 624}, { 1600, 970, 666 },
-    { 1708, 1035, 711 },{ 1872, 1134, 779 },{ 2059, 1248, 857 },{ 2188, 1326, 911 },{ 2395, 1451, 997 }
+    {1082, 656, 450}, {1212, 734, 504}, {1346, 816, 560}, {1500, 909, 624}, {1600, 970, 666},
+    {1708, 1035, 711}, {1872, 1134, 779}, {2059, 1248, 857}, {2188, 1326, 911}, {2395, 1451, 997},
+    {2544, 1542, 1059}, {2701, 1637, 1125}, {2857, 1732, 1190}, {3035, 1839, 1264}, {3289, 1994, 1370},
+    {3486, 2113, 1452}, {3693, 2238, 1538}, {3909, 2369, 1628}, {4134, 2506, 1722}, {4343, 2632, 1809},
+    {4588, 2780, 1911}, {4775, 2894, 1989}, {5039, 3054, 2099}, {5313, 3220, 2213}, {5596, 3391, 2331}
 };
 
                            /* SP                  $    %                        *    +         -    .    /    0    1    2    3    4    5    6    7    8    9    :  */
@@ -85,7 +100,7 @@ static uchar tablaPermitidos[27] = { 1,   0,   0,   0,   1,   1,   0,   0,   0, 
 
 /* Numero total de error correction codewords segun version y nivel de correccion de errores
    Tablas 13 a 22 del estandar */
-static const uint error_correction_codewords[25][2] =
+static const uint error_correction_codewords[40][2] =
 {
     { 7,  10 },
     { 10, 16 },
@@ -111,77 +126,122 @@ static const uint error_correction_codewords[25][2] =
     { 252,476 },
     { 270,504 },
     { 300,560 },
-    { 312,588 }
+    { 312,588 },
+    { 336,644 },
+    { 360,700 },
+    { 390,728 },
+    { 420,784 },
+    { 450,812 },
+    { 480,868 },
+    { 510,924 },
+    { 540,980 },
+    { 570,1036 },
+    { 570,1064 },
+    { 600,1120 },
+    { 630,1204 },
+    { 660,1260 },
+    { 720,1316 },
+    { 750,1372 }
 };
 
 /* Caracteristicas de los bloques de error correction para nivel L
    Tablas 13 a 22 del estandar
    numero de bloques, bytes de datos, bytes de error correction, numero de bloques, bytes de datos, bytes de error correction */
-static const uint error_correction_character_L[25][6] =
+static const unsigned int error_correction_character_L [40][6] =
 {
-    { 1, 19, 7, 0, 0, 0 },
-    { 1, 34, 10, 0, 0, 0 },
-    { 1, 55, 15, 0, 0, 0 },
-    { 1, 80, 20, 0, 0, 0 },
-    { 1, 108, 26, 0, 0, 0 },
-    { 2, 68, 18, 0, 0, 0 },
-    { 2, 78, 20, 0, 0, 0 },
-    { 2, 97, 24, 0, 0, 0 },
-    { 2, 116, 30, 0, 0, 0 },
-    { 2, 68, 18, 2, 69, 18 },
-    { 4, 81, 20, 0, 0, 0 },
-    { 2, 92, 24, 2, 93, 24 },
-    { 4, 107, 26, 0, 0, 0 },
-    { 3, 115, 30, 1, 116, 30 },
-    { 5, 87, 22, 1, 88, 22 },
-    { 5, 98, 24, 1, 99, 24 },
-    { 1, 107, 28, 5, 108, 28 },
-    { 5, 120, 30, 1, 121, 30 },
-    { 3, 113, 28, 4, 114, 28 },
-    { 3, 107, 28, 5, 108, 28 },
-    { 4, 116, 28, 4, 117, 28 },
-    { 2, 111, 28, 7, 112, 28 },
-    { 4, 121, 30, 5, 122, 30 },
-    { 6, 117, 30, 4, 118, 30 },
-    { 8, 106, 26, 4, 107, 26 }
+    {1, 19, 7, 0, 0, 0},
+    {1, 34, 10, 0, 0, 0},
+    {1, 55, 15, 0, 0, 0},
+    {1, 80, 20, 0, 0, 0},
+    {1, 108, 26, 0, 0, 0},
+    {2, 68, 18, 0, 0, 0},
+    {2, 78, 20, 0, 0, 0},
+    {2, 97, 24, 0, 0, 0},
+    {2, 116, 30, 0, 0, 0},
+    {2, 68, 18, 2, 69, 18},
+    {4, 81, 20, 0, 0, 0},
+    {2, 92, 24, 2, 93, 24},
+    {4, 107, 26, 0, 0, 0},
+    {3, 115, 30, 1, 116, 30},
+    {5, 87, 22, 1, 88, 22},
+    {5, 98, 24, 1, 99, 24},
+    {1, 107, 28, 5, 108, 28},
+    {5, 120, 30, 1, 121, 30},
+    {3, 113, 28, 4, 114, 28},
+    {3, 107, 28, 5, 108, 28},
+    {4, 116, 28, 4, 117, 28},
+    {2, 111, 28, 7, 112, 28},
+    {4, 121, 30, 5, 122, 30},
+    {6, 117, 30, 4, 118, 30},
+    {8, 106, 26, 4, 107, 26},
+    {10, 114, 28, 2, 115, 28},
+    {8, 122, 30, 4, 123, 30},
+	{3, 117, 30, 10, 118, 30},
+    {7, 116, 30, 7, 117, 30},
+    {5, 115, 30, 10, 116, 30},
+    {13, 115, 30, 3, 116, 30},
+    {17, 115, 30, 0, 0, 0},
+    {17, 115, 30, 1, 116, 30},
+    {13, 115, 30, 6, 116, 30},
+    {12, 121, 30, 7, 122, 30},
+    {6, 121, 30, 14, 122, 30},
+    {17, 122, 30, 4, 123, 30},
+    {4, 122, 30, 18, 123, 30},
+    {20, 117, 30, 4, 118, 30},
+    {19, 118, 30, 6, 119, 30}
 };
 
 
 /* Caracteristicas de los bloques de error correction para nivel M
    Tablas 13 a 22 del estandar
    numero de bloques, bytes de datos, bytes de error correction, numero de bloques, bytes de datos, bytes de error correction */
-static const uint error_correction_character_M [25][6] =
-{
-    { 1, 16, 10, 0, 0, 0 },
-    { 1, 28, 16, 0, 0, 0 },
-    { 1, 44, 26, 0, 0, 0 },
-    { 2, 32, 18, 0, 0, 0 },
-    { 2, 43, 24, 0, 0, 0 },
-    { 4, 27, 16, 0, 0, 0 },
-    { 4, 31, 18, 0, 0, 0 },
-    { 2, 38, 22, 2, 39, 22 },
-    { 3, 36, 22, 2, 37, 22 },
-    { 4, 43, 26, 1, 44, 26 },
-    { 1, 50, 30, 4, 51, 30 },
-    { 6, 36, 22, 2, 37, 22 },
-    { 8, 37, 22, 1, 38, 22 },
-    { 4, 40, 24, 5, 41, 24 },
-    { 5, 41, 24, 5, 42, 24 },
-    { 7, 45, 28, 3, 46, 28 },
-    { 10, 46, 28, 1, 47, 28 },
-    { 9, 43, 26, 4, 44, 26 },
-    { 3, 44, 26, 11, 45, 26 },
-    { 3, 41, 26, 13, 42, 26 },
-    { 17, 42, 26, 0, 0, 0 },
-    { 17, 46, 28, 0, 0, 0 },
-    { 4, 47, 28, 14, 48, 28 },
-    { 6, 45, 28, 14, 46, 28 },
-    { 8, 47, 28, 13, 48, 28 }
-};
+static const unsigned int error_correction_character_M [40][6] =
+    {
+        {1, 16, 10, 0, 0, 0 },
+        {1, 28, 16, 0, 0, 0 },
+        {1, 44, 26, 0, 0, 0 },
+        {2, 32, 18, 0, 0, 0 },
+        {2, 43, 24, 0, 0, 0 },
+        {4, 27, 16, 0, 0, 0 },
+        {4, 31, 18, 0, 0, 0 },
+        {2, 38, 22, 2, 39, 22 },
+        {3, 36, 22, 2, 37, 22 },
+        {4, 43, 26, 1, 44, 26 },
+        {1, 50, 30, 4, 51, 30 },
+        {6, 36, 22, 2, 37, 22 },
+        {8, 37, 22, 1, 38, 22 },
+        {4, 40, 24, 5, 41, 24 },
+        {5, 41, 24, 5, 42, 24 },
+        {7, 45, 28, 3, 46, 28 },
+        {10, 46, 28, 1, 47, 28 },
+        {9, 43, 26, 4, 44, 26 },
+        {3, 44, 26, 11, 45, 26 },
+        {3, 41, 26, 13, 42, 26 },
+        {17, 42, 26, 0, 0, 0 },
+        {17, 46, 28, 0, 0, 0 },
+        {4, 47, 28, 14, 48, 28 },
+        {6, 45, 28, 14, 46, 28 },
+        {8, 47, 28, 13, 48, 28 },
+        {19, 46, 28, 4, 47, 28 },
+        {22, 45, 28, 3, 46, 28 },
+        {3, 45, 28, 23, 46, 28 },
+        {21, 45, 28, 7, 46, 28 },
+        {19, 47, 28, 10, 48, 28 },
+        {2, 46, 28, 29, 47, 28 },
+        {10, 46, 28, 23, 47, 28 },
+        {14, 46, 28, 21, 47, 28 },
+        {14, 46, 28, 23, 47, 28 },
+        {12, 47, 28, 26, 48, 28 },
+        {6, 47, 28, 34, 48, 28 },
+        {29, 46, 28, 14, 47, 28 },
+        {13, 46, 28, 32, 47, 28 },
+        {40, 47, 28, 7, 48, 28 },
+        {18, 47, 28, 31, 48, 28 }
+    };
 
 /* Tabla para calcular las coordenadas de los aligment patterns
   (Anexo E del estandar) */
-static const uint coordenadas_alignment_patterns[25][8] =
+static const uint coordenadas_alignment_patterns[40][8] =
 {
     { 0, 0, 0, 0, 0, 0, 0, 0} ,
     { 2, 6, 18, 0, 0, 0, 0, 0},
@@ -202,12 +262,27 @@ static const uint coordenadas_alignment_patterns[25][8] =
     { 4, 6, 30, 54, 78, 0, 0, 0},
     { 4, 6, 30, 56, 82, 0, 0, 0},
     { 4, 6, 30, 58, 86, 0, 0, 0},
-    { 4, 6, 34, 62, 90, 0, 0, 0 },
-    { 5, 6, 28, 50, 72, 94, 0, 0 },
-    { 5, 6, 26, 50, 74, 98, 0, 0 },
-    { 5, 6, 30, 54, 78, 102, 0, 0 },
-    { 5, 6, 28, 54, 80, 106, 0, 0 },
-    { 5, 6, 32, 58, 84, 110, 0, 0 }
+    { 4, 6, 34, 62, 90, 0, 0, 0},
+    { 5, 6, 28, 50, 72, 94, 0, 0},
+    { 5, 6, 26, 50, 74, 98, 0, 0},
+    { 5, 6, 30, 54, 78, 102, 0, 0},
+    { 5, 6, 28, 54, 80, 106, 0, 0},
+    { 5, 6, 32, 58, 84, 110, 0, 0},
+    { 5, 6, 30, 58, 86, 114, 0, 0},
+    { 5, 6, 34, 62, 90, 118, 0, 0},
+    { 6, 6, 26, 50, 74, 98, 122, 0},
+    { 6, 6, 30, 54, 78, 102, 126, 0},
+    { 6, 6, 26, 52, 78, 104, 130, 0},
+    { 6, 6, 30, 56, 82, 108, 134, 0},
+    { 6, 6, 34, 60, 86, 112, 138, 0},
+    { 6, 6, 30, 58, 86, 114, 142, 0},
+    { 6, 6, 34, 62, 90, 118, 146, 0},
+    { 7, 6, 30, 54, 78, 102, 126, 150},
+    { 7, 6, 24, 50, 76, 102, 128, 154},
+    { 7, 6, 28, 54, 80, 106, 132, 158},
+    { 7, 6, 32, 58, 84, 110, 136, 162},
+    { 7, 6, 26, 54, 82, 110, 138, 166},
+    { 7, 6, 30, 58, 86, 114, 142, 170}
 };
 
 /* Informacion de la version (Pagina 79 del estandar) */
@@ -216,8 +291,7 @@ static bool version_information[34] = { 0x07C94, 0x085BC, 0x09A99, 0x0A4D3, 0x0B
                                          0x15683, 0x168C9, 0x177EC, 0x18EC4, 0x191E1, 0x1AFAB, 0x1B08E,
                                          0x1CC1A, 0x1D33F, 0x1ED75, 0x1F250, 0x209D5, 0x216F0, 0x228BA,
                                          0x2379F, 0x24B0B, 0x2542E, 0x26A64, 0x27541, 0x28C69 };
-
-
+                                         
 //***********************************************************************/
 // FUNCIONES LOCALES                                                    */
 //***********************************************************************/
@@ -225,10 +299,9 @@ static	uchar 	gadd							    (uchar a, uchar b);
 static	uchar 	gmul							    (uchar a, uchar b);
 static	uint 	prodQR							    (uint x, uint y);
 static	void 	calcula_error_codes					(uchar *data, uint num_data, uchar *error_codes, uint num_error_correction_codes);
-static	void 	QRdata_encode_alphanumeric			(struct QRcode *qrcode, char *data);
-static	void 	QRdata_encode_numeric				(struct QRcode *qrcode, char *data);
-static	void 	QRdata_encode_bytes					(struct QRcode *qrcode, char *data);
-static	uchar 	traduceDeMaquina					(uchar c);
+static	void 	QRdata_encode_alphanumeric			(struct QRcode *qrcode, char *data, uint data_length);
+static	void 	QRdata_encode_numeric				(struct QRcode *qrcode, char *data, uint data_length);
+static	void 	QRdata_encode_bytes					(struct QRcode *qrcode, char *data, uint data_length);
 static	void 	QRgenera_bitmap						(struct QRcode *qrcode);
 static	void 	QRaplica_mascara					(struct QRcode *qrcode, uchar mascara);
  #if 0
@@ -264,13 +337,11 @@ static	void 	aplica_mascara_111					(struct BitmapQR *bm, struct BitmapQR *colis
 static	void 	QRcoloca_format_info				(struct QRcode *qrcode);
 static	uchar 	bitAtByte							(uchar dato, uchar pos);
 static	uchar 	getPixelAt							(int x, int y, struct BitmapQR *bm);
-uchar	*obtenBufParser								(void);
-uint	obtenNumDig									(void);
 
 //***********************************************************************/
 // VARIABLES LOCALES                                                    */
 //***********************************************************************/
-uchar	versionLastQR = -1;
+uchar	versionLastQR;
 static	int		QRbuffer_indices[4096];
 struct	QRcode	qrcod;
 
@@ -339,56 +410,44 @@ static void calcula_error_codes(uchar *data, uint num_data, uchar *error_codes, 
 {
     int i, j;
     uchar c[68], b[68];
-    int temp,fin;
     int root=1;
-	
-    for(i = 0; i < 68; i++)
-    {
-        c[i] = 0;
-        b[i] = 0;
-    }
-    for (i = 0; i <= num_error_correction_codes; i++)
-        c[i] = 0;
 
-    c[num_error_correction_codes - 1] = 1;
+    for (i = 0; i < 68; i++)
+      {
+      c[i] = 0;
+      b[i] = 0;
+      }
+
+    c[0] = 1;
     
-    for(i = 0;i < num_error_correction_codes;i++) /* Calculo de coeficientes */
-    {
-     for(j = 0; j < num_error_correction_codes;j++)
-        {
-        c[j]= prodQR(c[j],root);
-        if(j + 1 < num_error_correction_codes)
-            c[j] ^= c[j+1];
+    for (i = num_error_correction_codes - 1; i >= 0; i--)	/* Calculo de coeficientes */
+      {
+      for (j = num_error_correction_codes - 1; j >= 0; j--)
+	    {
+	    c[j] = prodQR (c[j], root);
+	    if (j - 1 >= 0)
+	        c[j] ^= c[j - 1];
         }
-        root = prodQR(root, 0x02);
-    }
+      root = prodQR (root, 0x02);
+      }
     
-    fin = num_error_correction_codes - 1;
-    for (i = 0; i < num_error_correction_codes/2; i++) /* Invertir el array de coeficientes */
-       {
-       temp = c[i];
-       c[i]   = c[fin];
-       c[fin] = temp;
-       fin--;
-       }
 
     for (i = 0; i < num_data; i++)
-       {
-       uchar b65masin;
-       int j;
+      {
+      uchar b65masin;
+      int j;
 
-       b65masin = gadd(b[num_error_correction_codes-1], data[i]);
-       for (j = num_error_correction_codes-1; j > 0; j--)
-          {
-          b[j] = gadd(gmul(c[j], b65masin), b[j-1]);            
-          ResetWatchDog();
-          }
-
-       b[0] = gmul(c[0], b65masin);
-       }
+      b65masin = gadd(b[num_error_correction_codes-1], data[i]);
+      for (j = num_error_correction_codes-1; j > 0; j--)
+         {
+         b[j] = gadd(gmul(c[j], b65masin), b[j-1]);            
+         ResetWatchDog();
+         }
+      b[0] = gmul(c[0], b65masin);
+      }
 
     for (i = 0; i < num_error_correction_codes; i++)
-       error_codes[i] = b[num_error_correction_codes - 1 - i];
+        error_codes[i] = b[num_error_correction_codes - 1 - i];
 }
 
 //**********************************************************************************
@@ -401,13 +460,13 @@ static void calcula_error_codes(uchar *data, uint num_data, uchar *error_codes, 
 //**********************************************************************************
 static void QRcode_init(struct QRcode *qrcode, uint version, uint error_level)
 {
-    if( (version > 0 && version <= 40 && error_level >= 0 && error_level <= 3) == 0 )
+	if( (version > 0 && version <= 40 && error_level <= 1) == 0 )
         return;
 
     if (versionLastQR != version)
-    {
-        ini_datamatrix();       /* vamos a utilizar las mismas tablas que el datamatrix */
-    }
+      {
+      ini_datamatrix();       /* vamos a utilizar las mismas tablas que el datamatrix */
+      }
 
     qrcode->version = version;
     qrcode->error_level = error_level;
@@ -462,9 +521,7 @@ static void QRcode_init(struct QRcode *qrcode, uint version, uint error_level)
 //********************************************************************************* */
 static void QRgenera_bitmap(struct QRcode *qrcode)
 {
-        int i,j;
-
-
+    int i,j;
     int ud = 0;
     int x = qrcode->codigo.size -1;
     int y = qrcode->codigo.size -1;
@@ -474,16 +531,16 @@ static void QRgenera_bitmap(struct QRcode *qrcode)
 
     for(i = 0; i < qrcode->num_codewords; i++)
     {
-        uchar valor;
-        valor = qrcode->bs.datos[QRbuffer_indices[i]];
-        for(j = 7; j >= 0; j--)
-        {
+       uchar valor;
+       valor = qrcode->bs.datos[QRbuffer_indices[i]];
+       for(j = 7; j >= 0; j--)
+          {
             uchar aux_bit;
             aux_bit = bitAtByte(valor, j);
             setPixelAt(x, y, aux_bit, &qrcode->codigo);
 			siguiente_libre(&qrcode->colisiones, &x, &y, &ud);
 			ResetWatchDog();
-        }
+          }
     }
 
     for(i = qrcode->num_codewords; i < qrcode->num_codewords + qrcode->num_error_codewords; i++)
@@ -541,7 +598,6 @@ static void QRaplica_mascara(struct QRcode *qrcode, uchar mascara)
         break;
     }
 }
-
  #if 0
 // *********************************************************************************
 // static int busqueda_cuadrado_2x2(struct QRcode *qrcode, int x, int y)
@@ -724,8 +780,8 @@ static int QRcode_evalua_mascara(struct QRcode *qrcode, uint min_penalizacion)
     
     return penalizacion;
 }
-
  #endif
+
 // *********************************************************************************
 // void QRcalcula_codigo_optimo(struct QRcode *qrcode, char *datos)
 //
@@ -735,22 +791,40 @@ static int QRcode_evalua_mascara(struct QRcode *qrcode, uint min_penalizacion)
 //********************************************************************************* */
 void QRcalcula_codigo_optimo(struct QRcode *qrcode, char *datos, uint longitud, uchar error_level)
 {
-
+ #if 0
+    int i;
+    int min_penalizacion;
+    int mascara_min_penalizacion;    
+ #endif
+  
     QRdata_encode(qrcode, datos, longitud, error_level);
     ResetWatchDog();
     QRgen_error_codes(qrcode);
-
     ResetWatchDog();
-
     QRgenera_bitmap(qrcode);
     ResetWatchDog();
+ #if 0
+    min_penalizacion = 1000000;
 
-
-	QRaplica_mascara(qrcode, 3);					
+	mascara_min_penalizacion = 0;
+    for(i = 0; i <= 7; i++)
+    {
+        int penalizacion;
+        QRaplica_mascara(qrcode, i);
+        penalizacion = QRcode_evalua_mascara(qrcode, min_penalizacion);
+        if(penalizacion < min_penalizacion)
+        {
+            min_penalizacion = penalizacion;
+            mascara_min_penalizacion = i;
+        }
+        QRaplica_mascara(qrcode, i);
+    }
+    
+    QRaplica_mascara(qrcode, mascara_min_penalizacion);
+ #endif
+ 
+    QRaplica_mascara(qrcode, 3);
     ResetWatchDog();
-
-
-
     QRcoloca_format_info(qrcode);
     QRcoloca_version_information(qrcode);
     ResetWatchDog();
@@ -887,15 +961,17 @@ static uchar ascii2alphanumeric(uchar c)
 //
 // Codifica el string *data utilizando el modo alfanumerico
 //**********************************************************************************
-static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data)
+static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data, uint data_length)
 {
-    int i;
+    int i,j=0;
+    char d[3706];
+    int cter_ctrl=0;
     unsigned char pad[2] = {0xEC, 0x11};
 
     unsigned int cuantos_pares, ultimo;
     unsigned int length_padding;
 
-    unsigned int data_length;
+
 
     unsigned int version;
     unsigned int n_code_data;
@@ -905,7 +981,7 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data)
 
     struct BitStringQR *bs;
 
-    data_length = strlen(data);
+
 
     version = qrcode->version;
     n_code_data = qrcode->num_codewords;
@@ -920,6 +996,18 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data)
 
     insert_n_bitsQR(bs, 0x2, 4);
 	ResetWatchDog();
+    for(i=0;i<data_length;i++)
+    {
+    if (data[i] == IA_C  || data[i] == IA_F || data[i] == CAMBIO_A || data[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
+       {
+	   cter_ctrl++;
+	   continue;
+	   }
+	caracter1 = data[i];
+    d[j] = caracter1;
+    j++;
+    }
+    data_length -= cter_ctrl;
     insert_n_bitsQR(bs, data_length, char_count_indicator);
 	ResetWatchDog();
 
@@ -929,8 +1017,8 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data)
     for(i = 0; i < cuantos_pares; i++)
     {
         unsigned int aux;
-        caracter1 = data[i*2];
-        caracter2 = data[1+i*2];
+        caracter1 = d[i*2];
+        caracter2 = d[1+i*2];
         caracter1 = ascii2alphanumeric(caracter1);
         caracter2 = ascii2alphanumeric(caracter2);
         aux = (caracter1 * 45) + caracter2;
@@ -940,7 +1028,7 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data)
     //Si hay un ultimo caracter suelto
     if(ultimo == 1)
     {
-        caracter1 = (data[i*2]);
+        caracter1 = (d[i*2]);
         caracter1 = ascii2alphanumeric(caracter1);
         insert_n_bitsQR(bs, caracter1, 6);
     }
@@ -976,15 +1064,17 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data)
 //
 //Codifica en modo numerico el string *data (que solo debe contener numeros)
 //**********************************************************************************
-static void QRdata_encode_numeric(struct QRcode *qrcode, char *data)
+static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_length)
 {
-    int i;
+    int i,j=0;
+	char d[3706];
+    int cter_ctrl=0;
     unsigned char pad[2] = {0xEC, 0x11};
 
     unsigned int cuantos_trios, ultimo;
     unsigned int length_padding;
 
-    unsigned int data_length;
+
 
     unsigned int version;
     unsigned int n_code_data;
@@ -992,7 +1082,6 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data)
 
     struct BitStringQR *bs;
 
-    data_length = strlen(data);
 
     version = qrcode->version;
     n_code_data = qrcode->num_codewords;
@@ -1006,6 +1095,17 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data)
         char_count_indicator = 14;
 
     insert_n_bitsQR(bs, 0x1, 4);
+    for(i=0;i<data_length;i++)
+    {
+    if (data[i] == IA_C  || data[i] == IA_F || data[i] == CAMBIO_A || data[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
+       {
+	   cter_ctrl++;
+	   continue;
+	   }
+    d[j] = data[i];
+    j++;
+    }
+    data_length -= cter_ctrl;
     insert_n_bitsQR(bs, data_length, char_count_indicator);
 
     cuantos_trios = data_length / 3;
@@ -1015,7 +1115,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data)
     {
         unsigned int aux;
         //El menos 0x30 es para pasar de ASCII a digito binario
-        aux = (data[i*3 + 0] - 0x30)*100 + (data[i*3 + 1] - 0x30)*10 + (data[i*3 + 2] - 0x30)*1;
+        aux = (d[i*3 + 0] - 0x30)*100 + (d[i*3 + 1] - 0x30)*10 + (d[i*3 + 2] - 0x30)*1;
         insert_n_bitsQR(bs, aux, 10);
 		ResetWatchDog(); //CORRIGE RESETEO
     }
@@ -1024,7 +1124,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data)
     {
         unsigned int aux;
         //El menos 0x30 es para pasar de ASCII a digito binario
-        aux = (data[i*3 + 0] - 0x30)*10 + (data[i*3 + 1] - 0x30)*1;
+        aux = (d[i*3 + 0] - 0x30)*10 + (d[i*3 + 1] - 0x30)*1;
         insert_n_bitsQR(bs, aux, 7);
     }
 
@@ -1032,7 +1132,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data)
     {
         unsigned int aux;
         //El menos 0x30 es para pasar de ASCII a digito binario
-        aux = (data[i*3 + 0] - 0x30)*1;
+        aux = (d[i*3 + 0] - 0x30)*1;
         insert_n_bitsQR(bs, aux, 4);
     }
 
@@ -1062,88 +1162,23 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data)
 
 }
 
-// *********************************************************************************
-// void traduceDeMaquina(char* data, unsigned int pos)
-//
-// Traduce algunos caracteres del codepage de la máquina a ISO Latin 1 (ISO/IEC 8859-1) 
-// que es el que usa el QR sino se especifica ECI. EL 8859-1 es igual que el ASCII hasta 127
-// y luego lleva su tabla del 128 al 255 https://es.wikipedia.org/wiki/ISO/IEC_8859-1
-//********************************************************************************* */
-static uchar traduceDeMaquina(uchar c)
-{
-    switch (c)
-    {
-    case 0x1C: /* ( */
-        c = 0x28;
-        break;
-    case 0x1D: /* ) */
-        c = 0x29;
-        break;
-
-    case 0x96: /* á */
-        c = 0xE1;
-        break;
-    case 0x9A: /* é */
-        c = 0xE9;
-        break;
-    case 0x9E: /* í */
-        c = 0xED;
-        break;
-    case 0xA2: /* ó */
-        c = 0xF3;
-        break;
-    case 0xA6:/* ú */
-        c = 0xFA;
-        break;
-       
-    case 0x82: /* Á */
-        c = 0xC1;
-        break;
-    case 0x86: /* É */
-        c = 0xC9;
-        break;
-    case 0x8A: /* Í */
-        c = 0xCD;
-        break;
-    case 0x8E: /* Ó */
-        c = 0xD3;
-        break;
-    case 0x92: /* Ú */
-        c = 0xDA;
-        break;
-
-    case 0xD0: /* Ç */
-        c = 0xC7;
-        break;
-    case 0xD1: /* ç */
-        c = 0xE7;
-        break;
-        
-    case 0xD2: /* Ñ */
-        c = 0xD1;
-        break;
-    case 0xD3: /* ñ */
-        c = 0xF1;
-        break;
-        
-    }
-    return c;
-}
 
 // *********************************************************************************
 // static void QRdata_encode_bytes(struct QRcode *qrcode, char *data, unsigned int longitud)
 //
 // Codifica el string *data utilizando el modo bytes
 //********************************************************************************* */
-static void QRdata_encode_bytes(struct QRcode *qrcode, char *data)
+static void QRdata_encode_bytes(struct QRcode *qrcode, char *data, uint data_length)
 {
-    int i;
+    int i,j=0;
+    int cter_ctrl = 0;
+    char d[3706];
    unsigned char pad[2] = {0xEC, 0x11};
 
 
     unsigned int length_padding;
 
-    unsigned int data_length;
+
 
     unsigned int version;
     unsigned int n_code_data;
@@ -1153,7 +1188,6 @@ static void QRdata_encode_bytes(struct QRcode *qrcode, char *data)
 
     struct BitStringQR *bs;
 
-    data_length = strlen(data);
 
     version = qrcode->version;
     n_code_data = qrcode->num_codewords;
@@ -1179,11 +1213,23 @@ static void QRdata_encode_bytes(struct QRcode *qrcode, char *data)
         char_count_indicator = 16;
 
     insert_n_bitsQR(bs, 0x4, 4);
+    for(i=0;i<data_length;i++)
+    {
+    if (data[i] == IA_C  || data[i] == IA_F || data[i] == CAMBIO_A || data[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
+       {
+	   cter_ctrl++;
+	   continue;
+	   }
+	caracter1 = data[i];
+    d[j] = caracter1;
+    j++;
+    }
+    data_length -= cter_ctrl;
     insert_n_bitsQR(bs, data_length, char_count_indicator);
 
     for(i = 0; i < data_length; i++)
     {
-        caracter1 = traduceDeMaquina(data[i]);
+        caracter1 = d[i];
 		insert_n_bitsQR(bs, caracter1, 8);
 		ResetWatchDog(); //CORRIGE RESETEO
     }
@@ -1237,8 +1283,8 @@ static void QRdata_encode_bytes(struct QRcode *qrcode, char *data)
 static int busca_version_necesaria(uchar error_level, uint longitud, uint tipo_codificacion)
 {
     int i;
-    uint longitud_encontrada;
-
+    uint longitud_encontrada = 0;
+    
     for(i = 0; i < 40; i++)
     {
         switch(error_level)
@@ -1265,6 +1311,9 @@ uchar getTipoMsg(char* datos, uint longitud)
 
     for (i = 0; (i < longitud) && (bNumerica | bAlfaNumerica); i++)
     {
+        if (datos[i] == IA_C  || datos[i] == IA_F || datos[i] == CAMBIO_A || datos[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
+	      continue;
+	      
         if (datos[i] < 0x30 || datos[i] > 0x39)
             bNumerica = 0;
         
@@ -1294,15 +1343,15 @@ static void QRdata_encode(struct QRcode *qrcode, char *datos, uint longitud, uch
 
     if (tipoMsg == 0)
     {
-        QRdata_encode_numeric(qrcode, datos);
+        QRdata_encode_numeric(qrcode, datos, longitud);
     }
     else if (tipoMsg == 1)
     {
-        QRdata_encode_alphanumeric(qrcode, datos);
+        QRdata_encode_alphanumeric(qrcode, datos, longitud);
     }
     else
     {
-        QRdata_encode_bytes(qrcode, datos);
+        QRdata_encode_bytes(qrcode, datos, longitud);
     }
 }
 
@@ -1473,7 +1522,7 @@ static void inicializa_bitmap(int size, struct BitmapQR *bm)
 {
     int i;
     bm->size = size;
-    for(i = 0; i < 3360; i++)
+    for(i = 0; i < 4100; i++)
 	{
 		ResetWatchDog();
         bm->m[i] = 0;
@@ -2128,7 +2177,7 @@ int pos_format2[15][2] = { {8,20}, {8,19}, {8,18}, {8,17}, {8,16}, {8,15}, {8,14
 uchar b[32][2] = {
                         {0x54, 0x12}, {0x51, 0x25}, {0x5E, 0x7C}, {0x5B, 0x4B}, {0x45, 0xF9},
                         {0x40, 0xCE}, {0x4F, 0x97}, {0x4A, 0xA0}, {0x77, 0xC4}, {0x72, 0xF3},
-                        {0x7D, 0xAA}, {0x78, 0x9D}, {0x66, 0x2F}, {0x63, 0x14}, {0x6C, 0x41},
+                        {0x7D, 0xAA}, {0x78, 0x9D}, {0x66, 0x2F}, {0x63, 0x18}, {0x6C, 0x41},
                         {0x69, 0x76}, {0x16, 0x89}, {0x13, 0xBE}, {0x1C, 0xE7}, {0x19, 0xD0},
                         {0x07, 0x62}, {0x02, 0x55}, {0x0D, 0x0C}, {0x08, 0x3B}, {0x35, 0x5F},
                         {0x30, 0x68}, {0x3F, 0x31}, {0x3A, 0x06}, {0x24, 0xB4}, {0x21, 0x83},
