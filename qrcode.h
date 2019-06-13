@@ -1,5 +1,10 @@
+
 #define QR_CODE                 1
-uchar	cal_qr(void);
+
+uchar	cal_qr								(void);
+struct	QRcode *obtenQRcode					(void);
+uchar	*obtenBufParser						(void);
+uint	obtenNumDig						    (void);
 
 //**************************************************************************************
 // DEFINES                                                                             *
@@ -8,7 +13,7 @@ uchar	cal_qr(void);
 struct BitmapQR
 {
 	int size; 	/* 21 a 93 con saltos de 4 en 4 */
-	unsigned char m[3360];
+	unsigned char m[4100];
 };
 
 struct BitStringQR 
@@ -33,5 +38,3 @@ struct QRcode
 	unsigned char mascara;
 	unsigned int format_info;
 };
-
-
