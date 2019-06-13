@@ -383,7 +383,7 @@ static uchar gmul(uchar a, uchar b)
 // *********************************************************************************
 // char prodQR(int x, int y)
 //
-// MultiplicaciÛn en el campo de Galoise para Reed-Solomon
+// Multiplicaci√≥n en el campo de Galoise para Reed-Solomon
 //********************************************************************************** */
 static uint prodQR(uint x, uint y) 
 {
@@ -453,7 +453,7 @@ static void calcula_error_codes(uchar *data, uint num_data, uchar *error_codes, 
 //**********************************************************************************
 // void QRcode_init(struct QRcode *qrcode, unsigned int version, unsigned int error_level)
 //
-// Funcion que realiza las tareas de inicializaciÛn de un codigo QR
+// Funcion que realiza las tareas de inicializaci√≥n de un codigo QR
 // *qrcode: codigo a inicializar
 // version: numero de version del codigo (1 a 40)
 // error_level: nivel de deteccion de errores en el codigo: 0 => L, 1 => M, 2 => Q, 3 => H
@@ -602,7 +602,7 @@ static void QRaplica_mascara(struct QRcode *qrcode, uchar mascara)
 // *********************************************************************************
 // static int busqueda_cuadrado_2x2(struct QRcode *qrcode, int x, int y)
 //
-// Funcion que evalua si en la posiciÛn (x,y) del bitmap del codigo QR
+// Funcion que evalua si en la posici√≥n (x,y) del bitmap del codigo QR
 // existe o no un cuadrado de 2x2 pixels del mismo color.
 // Devuelve 1 si existe, 0 si no existe
 //********************************************************************************* */
@@ -661,7 +661,7 @@ static int busqueda_1_1_3_1_1_v(struct QRcode *qrcode, int x, int y, uchar xyVal
 //
 // Funcion que calcula el factor de penalizacion del codigo QR con la mascara que
 // tiene activa en ese momento.
-// Devuelve el factor de penalizaciÛn.
+// Devuelve el factor de penalizaci√≥n.
 //********************************************************************************* */
 static int QRcode_evalua_mascara(struct QRcode *qrcode, uint min_penalizacion)
 {
@@ -678,7 +678,7 @@ static int QRcode_evalua_mascara(struct QRcode *qrcode, uint min_penalizacion)
     //Aprovecho para contar el numero de pixels en negro */ 
     for(x = 0; x < qrcode->codigo.size - 1; x++)
     {
-    	if (min_penalizacion < penalizacion)	/* Si ya hemos sobrepasado la penalizaciÛn Ûptima, no continuamos. */
+    	if (min_penalizacion < penalizacion)	/* Si ya hemos sobrepasado la penalizaci√≥n √≥ptima, no continuamos. */
     		return (1000000);
     		
         anterior = 2;
@@ -721,7 +721,7 @@ static int QRcode_evalua_mascara(struct QRcode *qrcode, uint min_penalizacion)
        Penalizacion: 3 + 1 por cada pixel a partir de 5 */
     for(y = 0; y < qrcode->codigo.size - 1; y++)
     {
-    	if (min_penalizacion < penalizacion)	/* Si ya hemos sobrepasado la penalizaciÛn Ûptima, no continuamos. */
+    	if (min_penalizacion < penalizacion)	/* Si ya hemos sobrepasado la penalizaci√≥n √≥ptima, no continuamos. */
     		return (1000000);
 
         anterior = 2;
@@ -833,7 +833,7 @@ void QRcalcula_codigo_optimo(struct QRcode *qrcode, char *datos, uint longitud, 
 // *********************************************************************************
 // static void QRgen_error_codes(struct QRcode *qrcode)
 //
-// FunciÛn que calcula todos los bloques de error codes
+// Funci√≥n que calcula todos los bloques de error codes
 //********************************************************************************* */
 static void QRgen_error_codes(struct QRcode *qrcode)
 {
@@ -843,14 +843,14 @@ static void QRgen_error_codes(struct QRcode *qrcode)
     uchar *error_codes;
 
     data = &qrcode->bs.datos[0]; //data apunta al comienzo del array de bytes con los datos
-    error_codes = data + qrcode->num_codewords; //error_codes apunta a la posiciÛn del array de datos a partir de la cual hay que colocar los error codes
+    error_codes = data + qrcode->num_codewords; //error_codes apunta a la posici√≥n del array de datos a partir de la cual hay que colocar los error codes
 
     for(i = 0; i < qrcode->numero_bloques_1; i++)
     {
         calcula_error_codes(data, qrcode->num_datos_bloques_1, error_codes, qrcode->num_error_bloques_1);
         data += qrcode->num_datos_bloques_1;
         error_codes += qrcode->num_error_bloques_1;
-        qrcode->bs.length += 8*qrcode->num_error_bloques_1; //Actualizo el tamaÒo del bitstring
+        qrcode->bs.length += 8*qrcode->num_error_bloques_1; //Actualizo el tama√±o del bitstring
 		ResetWatchDog(); //CORRIGE RESETEO
     }
     for(i = 0; i < qrcode->numero_bloques_2; i++)
@@ -858,7 +858,7 @@ static void QRgen_error_codes(struct QRcode *qrcode)
         calcula_error_codes(data, qrcode->num_datos_bloques_2, error_codes, qrcode->num_error_bloques_2);
         data += qrcode->num_datos_bloques_2;
         error_codes += qrcode->num_error_bloques_2;
-        qrcode->bs.length += 8*qrcode->num_error_bloques_2; //Actualizo el tamaÒo del bitstring
+        qrcode->bs.length += 8*qrcode->num_error_bloques_2; //Actualizo el tama√±o del bitstring
 		ResetWatchDog(); //CORRIGE RESETEO
     }
 }
@@ -1036,7 +1036,7 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data, uint d
     {
         unsigned int cuantos_bits_quedan;
         cuantos_bits_quedan = (n_code_data * 8) - bs->length;
-        //Si quedan menos de 4 bits para completar el tamaÒo maximo del simbolo, el terminador no se introduce completo
+        //Si quedan menos de 4 bits para completar el tama√±o maximo del simbolo, el terminador no se introduce completo
         if(cuantos_bits_quedan < 4)
         {
             insert_n_bitsQR(bs, 0, cuantos_bits_quedan);
@@ -1139,7 +1139,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
     {
         unsigned int cuantos_bits_quedan;
         cuantos_bits_quedan = (n_code_data * 8) - bs->length;
-        //Si quedan menos de 4 bits para completar el tamaÒo maximo del simbolo, el terminador no se introduce completo
+        //Si quedan menos de 4 bits para completar el tama√±o maximo del simbolo, el terminador no se introduce completo
         if(cuantos_bits_quedan < 4)
         {
             insert_n_bitsQR(bs, 0, cuantos_bits_quedan);
@@ -1223,7 +1223,7 @@ static void QRdata_encode_bytes(struct QRcode *qrcode, char *data, uint data_len
     {
         uint cuantos_bits_quedan;
         cuantos_bits_quedan = (n_code_data * 8) - bs->length + 12;
-        //Si quedan menos de 4 bits para completar el tamaÒo maximo del simbolo, el terminador no se introduce completo
+        //Si quedan menos de 4 bits para completar el tama√±o maximo del simbolo, el terminador no se introduce completo
         if(cuantos_bits_quedan < 4)
         {
             insert_n_bitsQR(bs, 0, cuantos_bits_quedan);
@@ -1261,7 +1261,7 @@ static void QRdata_encode_bytes(struct QRcode *qrcode, char *data, uint data_len
 // *********************************************************************************
 // static int busca_version_necesaria(unsigned char error_level, unsigned int longitud, unsigned int tipo_codificacion)
 //
-// Funcion que calcula la version necesaria para un nivel de error, tamaÒo y tipo de codificacion concretos
+// Funcion que calcula la version necesaria para un nivel de error, tama√±o y tipo de codificacion concretos
 // tipo_codificacion: 0 => numerica, 1 => alfanumerica, 2 => bytes
 // (Tablas 7 a 11 del estandar)
 //********************************************************************************* */
@@ -1286,7 +1286,7 @@ static int busca_version_necesaria(uchar error_level, uint longitud, uint tipo_c
 // *********************************************************************************
 // uchar getTipoMsg(char* datos, unsigned int longitud)
 //
-// Calcula el tipo de datos que hay en el mensaje. Devuelv 0 para n˙mericos, 1 para alfanumÈricos y 2 para otros
+// Calcula el tipo de datos que hay en el mensaje. Devuelv 0 para n√∫mericos, 1 para alfanum√©ricos y 2 para otros
 //********************************************************************************* */
 uchar getTipoMsg(char* datos, uint longitud)
 {
@@ -1500,7 +1500,7 @@ static void insert_n_bitsQR(struct BitStringQR *bs, uint data, uint nbits)
 //**********************************************************************************
 // static void inicializa_bitmap(int size, struct BitmapQR *bm)
 //
-// Inicializa un bitmap de tamaÒo size
+// Inicializa un bitmap de tama√±o size
 //**********************************************************************************
 static void inicializa_bitmap(int size, struct BitmapQR *bm)
 {
@@ -1877,9 +1877,9 @@ static void QRcoloca_version_information(struct QRcode *qrcode)
 //
 // Funcion recursiva que calcula el siguiente pixel en el que se deben colocar datos
 // bm: bitmap con la mascara de puntos que no se pueden utilizar
-// x, y: coordenadas del ˙ltimo punto utilizado. Tb devuelve ahÌ el siguiente punto libre
-// lr: posiciÛn del ˙ltimo punto probado (0 = left, 1 = right)
-// ud: direcciÛn de movimiento dentro del simbolo (0 = up, 1 = down)
+// x, y: coordenadas del √∫ltimo punto utilizado. Tb devuelve ah√≠ el siguiente punto libre
+// lr: posici√≥n del √∫ltimo punto probado (0 = left, 1 = right)
+// ud: direcci√≥n de movimiento dentro del simbolo (0 = up, 1 = down)
 //********************************************************************************* */
 static void siguiente_libre(struct BitmapQR *bm, int *x, int *y, int *ud)
 {
@@ -2173,7 +2173,7 @@ uchar b[32][2] = {
     //Punto fijo a negro
     setPixelAt(8, qrcode->codigo.size - 8, 1, &qrcode->codigo);
 
-    //Ajusto los valores de pos_format2, que dependen del tamaÒo
+    //Ajusto los valores de pos_format2, que dependen del tama√±o
     for(i = 0; i < 7; i++)
     {
         pos_format2[i][1] += (qrcode->version -1)*4;
