@@ -963,9 +963,7 @@ static uchar ascii2alphanumeric(uchar c)
 //**********************************************************************************
 static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data, uint data_length)
 {
-    int i,j=0;
-    char d[3706];
-    int cter_ctrl=0;
+    int i;
     unsigned char pad[2] = {0xEC, 0x11};
 
     unsigned int cuantos_pares, ultimo;
@@ -996,18 +994,6 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data, uint d
 
     insert_n_bitsQR(bs, 0x2, 4);
 	ResetWatchDog();
-    for(i=0;i<data_length;i++)
-    {
-    if (data[i] == IA_C  || data[i] == IA_F || data[i] == CAMBIO_A || data[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
-       {
-	   cter_ctrl++;
-	   continue;
-	   }
-	caracter1 = data[i];
-    d[j] = caracter1;
-    j++;
-    }
-    data_length -= cter_ctrl;
     insert_n_bitsQR(bs, data_length, char_count_indicator);
 	ResetWatchDog();
 
@@ -1017,8 +1003,8 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data, uint d
     for(i = 0; i < cuantos_pares; i++)
     {
         unsigned int aux;
-        caracter1 = d[i*2];
-        caracter2 = d[1+i*2];
+        caracter1 = data[i*2];
+        caracter2 = data[1+i*2];
         caracter1 = ascii2alphanumeric(caracter1);
         caracter2 = ascii2alphanumeric(caracter2);
         aux = (caracter1 * 45) + caracter2;
@@ -1028,7 +1014,7 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data, uint d
     //Si hay un ultimo caracter suelto
     if(ultimo == 1)
     {
-        caracter1 = (d[i*2]);
+        caracter1 = (data[i*2]);
         caracter1 = ascii2alphanumeric(caracter1);
         insert_n_bitsQR(bs, caracter1, 6);
     }
@@ -1066,9 +1052,7 @@ static void QRdata_encode_alphanumeric(struct QRcode *qrcode, char *data, uint d
 //**********************************************************************************
 static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_length)
 {
-    int i,j=0;
-	char d[3706];
-    int cter_ctrl=0;
+    int i;
     unsigned char pad[2] = {0xEC, 0x11};
 
     unsigned int cuantos_trios, ultimo;
@@ -1095,17 +1079,6 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
         char_count_indicator = 14;
 
     insert_n_bitsQR(bs, 0x1, 4);
-    for(i=0;i<data_length;i++)
-    {
-    if (data[i] == IA_C  || data[i] == IA_F || data[i] == CAMBIO_A || data[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
-       {
-	   cter_ctrl++;
-	   continue;
-	   }
-    d[j] = data[i];
-    j++;
-    }
-    data_length -= cter_ctrl;
     insert_n_bitsQR(bs, data_length, char_count_indicator);
 
     cuantos_trios = data_length / 3;
@@ -1115,7 +1088,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
     {
         unsigned int aux;
         //El menos 0x30 es para pasar de ASCII a digito binario
-        aux = (d[i*3 + 0] - 0x30)*100 + (d[i*3 + 1] - 0x30)*10 + (d[i*3 + 2] - 0x30)*1;
+        aux = (data[i*3 + 0] - 0x30)*100 + (data[i*3 + 1] - 0x30)*10 + (data[i*3 + 2] - 0x30)*1;
         insert_n_bitsQR(bs, aux, 10);
 		ResetWatchDog(); //CORRIGE RESETEO
     }
@@ -1124,7 +1097,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
     {
         unsigned int aux;
         //El menos 0x30 es para pasar de ASCII a digito binario
-        aux = (d[i*3 + 0] - 0x30)*10 + (d[i*3 + 1] - 0x30)*1;
+        aux = (data[i*3 + 0] - 0x30)*10 + (data[i*3 + 1] - 0x30)*1;
         insert_n_bitsQR(bs, aux, 7);
     }
 
@@ -1132,7 +1105,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
     {
         unsigned int aux;
         //El menos 0x30 es para pasar de ASCII a digito binario
-        aux = (d[i*3 + 0] - 0x30)*1;
+        aux = (data[i*3 + 0] - 0x30)*1;
         insert_n_bitsQR(bs, aux, 4);
     }
 
@@ -1158,7 +1131,10 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
     //Padding
     length_padding = bs->length/8;
     for(i = 0; i < n_code_data - length_padding; i++)
+        {
         insert_n_bitsQR(bs, pad[i%2], 8);
+        ResetWatchDog();
+        }
 
 }
 
@@ -1170,9 +1146,7 @@ static void QRdata_encode_numeric(struct QRcode *qrcode, char *data, uint data_l
 //********************************************************************************* */
 static void QRdata_encode_bytes(struct QRcode *qrcode, char *data, uint data_length)
 {
-    int i,j=0;
-    int cter_ctrl = 0;
-    char d[3706];
+    int i;
    unsigned char pad[2] = {0xEC, 0x11};
 
 
@@ -1213,23 +1187,11 @@ static void QRdata_encode_bytes(struct QRcode *qrcode, char *data, uint data_len
         char_count_indicator = 16;
 
     insert_n_bitsQR(bs, 0x4, 4);
-    for(i=0;i<data_length;i++)
-    {
-    if (data[i] == IA_C  || data[i] == IA_F || data[i] == CAMBIO_A || data[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
-       {
-	   cter_ctrl++;
-	   continue;
-	   }
-	caracter1 = data[i];
-    d[j] = caracter1;
-    j++;
-    }
-    data_length -= cter_ctrl;
     insert_n_bitsQR(bs, data_length, char_count_indicator);
 
     for(i = 0; i < data_length; i++)
     {
-        caracter1 = d[i];
+        caracter1 = data[i];
 		insert_n_bitsQR(bs, caracter1, 8);
 		ResetWatchDog(); //CORRIGE RESETEO
     }
@@ -1269,7 +1231,10 @@ static void QRdata_encode_bytes(struct QRcode *qrcode, char *data, uint data_len
 	}		
  #else
     for(i = 0; i < n_code_data + 12 - length_padding; i++) //incluye los 12 del ECI
+        {
         insert_n_bitsQR(bs, pad[i%2], 8);
+        ResetWatchDog();
+        }
  #endif        
 }
 
@@ -1311,9 +1276,6 @@ uchar getTipoMsg(char* datos, uint longitud)
 
     for (i = 0; (i < longitud) && (bNumerica | bAlfaNumerica); i++)
     {
-        if (datos[i] == IA_C  || datos[i] == IA_F || datos[i] == CAMBIO_A || datos[i] == CAMBIO_B)		/* Los parentesis y cteres de control, nada */
-	      continue;
-	      
         if (datos[i] < 0x30 || datos[i] > 0x39)
             bNumerica = 0;
         
@@ -1321,6 +1283,7 @@ uchar getTipoMsg(char* datos, uint longitud)
             bAlfaNumerica = tablaPermitidos[datos[i] - 0x20];
         else if (datos[i] < 0x41 || datos[i] > 0x5A)
             bAlfaNumerica = 0;
+        ResetWatchDog();    
     }
 
     if (bNumerica)
@@ -1340,7 +1303,7 @@ static void QRdata_encode(struct QRcode *qrcode, char *datos, uint longitud, uch
 {
     uchar tipoMsg = getTipoMsg(datos, longitud);
     QRcode_init(qrcode, busca_version_necesaria(error_level, longitud, tipoMsg), error_level);
-
+    
     if (tipoMsg == 0)
     {
         QRdata_encode_numeric(qrcode, datos, longitud);
@@ -1364,7 +1327,10 @@ static void init_bitStringQR(struct BitStringQR *bs)
 {
     int i;
     for(i = 0; i < 3360; i++)
+    {
         bs->datos[i] = 0;
+        ResetWatchDog(); //CORRIGE RESETEO
+    }
     bs->length = 0;
 
 }
