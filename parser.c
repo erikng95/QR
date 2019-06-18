@@ -5576,7 +5576,7 @@ uchar 	dib_qr(void)
 // **********************************************************************/
 uchar 	*obtenBufParser (void)
 {
-    int i;
+    int i,j=0;
     cter_especiales = 0;
     
     for(i=1;i<num_digitos_codigo_barras;i++)
@@ -5586,8 +5586,8 @@ uchar 	*obtenBufParser (void)
 	   cter_especiales++;
 	   continue;
 	   }
-    buf_qr[i-cter_especiales] = buf_auxiliar_parser[i];
-    }
+    buf_qr[j++] = buf_auxiliar_parser[i];
+	}
 	return &buf_qr[0]; 
 }
 
